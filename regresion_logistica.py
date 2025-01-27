@@ -19,7 +19,7 @@ dataset_count = len(dataset)
 
 mean_values = dataset[['random_domain', 'port', 'dns_record', 'login_form', 'google_index']].mean(numeric_only=True)
 median_values = dataset[['random_domain', 'port', 'dns_record', 'login_form', 'google_index']].median(numeric_only=True)
-mode_values = dataset[['random_domain', 'port', 'dns_record', 'login_form', 'google_index']].mode().iloc[0]  # Tomar la primera moda si hay múltiples
+mode_values = dataset[['random_domain', 'port', 'dns_record', 'login_form', 'google_index']].mode().iloc[0]
 
 
 print("Valores únicos para 'random_domain':")
