@@ -1,0 +1,13 @@
+random_domain
+
+port
+
+dns_record
+
+login_form
+
+google_index
+
+
+status  es Y
+
