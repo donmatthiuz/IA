@@ -1,6 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.model_selection import train_test_split
+from Regresion_logistica import Logistica
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
 #=================PARTE 1 ANALISIS Y LIMPIEZA DATASET========================
 file_path = "./dataset_phishing.csv"
@@ -75,8 +78,8 @@ dataset['length_url'] = (dataset['length_url'] - min_length)/(max_length - min_l
 
 
 #Ahora vamos a convertir nuestro status a un valor numerico
-# PHISING 0 y legitimate 1
-dataset['status_numeric'] = dataset['status'].map({'phishing': 0, 'legitimate': 1})
+# PHISING 1 y legitimate 0
+dataset['status_numeric'] = dataset['status'].map({'phishing': 1, 'legitimate': 0})
 
 
 
@@ -84,37 +87,37 @@ dataset['status_numeric'] = dataset['status'].map({'phishing': 0, 'legitimate': 
 
 #=====================PARTE 2 IMPLEMENTACIION DE ALGORITMO REGRESION A MANO==============
 
-#Ahora vamos a graficar la funcion. 
+#Vamos a dividir en 2 test y entrenamiento
 
+X = dataset[['length_url','google_index']].values
+Y = dataset['status_numeric'].values
 
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-# x = np.linspace(0,dataset['length_url'].max(),100)
-# y = 1/(1+np.exp(-(w*x+b)))
-
-# grafica de la recta
-# dataset.plot.scatter(x='length_url',y='status_numeric')
-# plt.plot(x, y, 'r')
-# plt.ylim(0,dataset['status_numeric'].max()*1.1)
-# # plt.grid()
-# plt.show()
-
-# Ahora vamos a obtener el trainloss y el promedio de perdida
-
-# # calculo de las predicciones
-# dataset['sigmoid'] = 1/(1+np.exp(-(dataset['length_url']*w+b)))
-
-# # calculo de la funcion de error
-# dataset['loss_xi'] = -dataset['status_numeric']*np.log(dataset['sigmoid'])-(1-dataset['status_numeric'])*np.log(1-dataset['sigmoid'])
-# cost_j = dataset['loss_xi'].mean()
-# print(cost_j)
-
-
-X_train = dataset[['length_url','dns_record']].values
-Y_train = dataset['status_numeric'].values
+unique, counts = np.unique(y_train, return_counts=True)
+for value, count in zip(unique, counts):
+    print(f"Valor único: {value}, Cantidad: {count}")
+    
+# No es necesario hacer ajustes
 
 
 #Variables a Definir
 w = np.zeros(X_train.shape[1])  
-b = 0
-learning_rate = 0.01
-epocas = 1000
+b = 0.4
+learning_rate = 0.5
+epocas = 7000
+
+regresion = Logistica(learning_rate=learning_rate, epocas=epocas)
+
+W, B = regresion.algoritmo_sin_librerias(X=X_train, Y=y_train, w=w, b=b)
+print(W ,B)
+
+#Ahora vamos a predecir
+
+y_prediccion = 1 / (1 + np.exp(-(np.dot(X_test, W) + B)))
+y_predichas = [1 if val >= 0.5 else 0 for val in y_prediccion]
+
+accuracy = accuracy_score(y_test, y_predichas)
+print(f"Accuracy: {accuracy:.4f}")
+
+print(classification_report(y_test, y_predichas))
