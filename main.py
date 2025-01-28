@@ -2,8 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
-from Regresion_logistica import Logistica
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from regresion_logistica import Logistica
+from validacion import f1_score
+
 
 #=================PARTE 1 ANALISIS Y LIMPIEZA DATASET========================
 file_path = "./dataset_phishing.csv"
@@ -114,5 +115,5 @@ y_predichas_modelo_sklearn = regresion.algoritmo_con_librerias(X_train=X_train, 
 #Ahora vamos a predecir
 
 
-print(classification_report(y_test, y_predichas_mimodelo))
-print(classification_report(y_test, y_predichas_modelo_sklearn))
+print(f1_score(ytest=y_test, ypredichas=y_predichas_mimodelo))
+print(f1_score(ytest=y_test, ypredichas=y_predichas_modelo_sklearn))
