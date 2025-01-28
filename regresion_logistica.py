@@ -1,53 +1,26 @@
-import pandas as pd
+import numpy as np
 
+class Logistica():
+  def __init__(self, learning_rate , epocas):
+    self.learning_rate = learning_rate
+    self.epocas = epocas
 
-file_path = "./dataset_phishing.csv"
+  def delta_j_w(X, Y, w, b):
+    #Vamos a calcular el gradiente para nuestro vector w de pesos.
+    m = X.shape[0]
+    sigmoid = 1 / (1 + np.exp(-(np.dot(X, w) + b)))
+    partial_loss = (sigmoid - Y).reshape(-1, 1) * X 
+    derivative = partial_loss.mean(axis=0)
+    return derivative
+  
+  def delta_j_b(X, Y, w, b):
+    m = X.shape[0]
+    sigmoid = 1 / (1 + np.exp(-(np.dot(X, w) + b)))
+    partial_loss = sigmoid - Y 
+    derivative = partial_loss.mean()
+    return derivative
 
-
-dataset = pd.read_csv(file_path)
-
-print("==================ANALISIS EXPLORATORIO===============")
-random_domain_unique = dataset['random_domain'].unique()
-port_unique = dataset['port'].unique()
-dns_record_unique = dataset['dns_record'].unique()
-login_form_unique = dataset['login_form'].unique()
-google_index_unique = dataset['google_index'].unique()
-
-
-dataset_count = len(dataset)
-
-
-mean_values = dataset[['random_domain', 'port', 'dns_record', 'login_form', 'google_index']].mean(numeric_only=True)
-median_values = dataset[['random_domain', 'port', 'dns_record', 'login_form', 'google_index']].median(numeric_only=True)
-mode_values = dataset[['random_domain', 'port', 'dns_record', 'login_form', 'google_index']].mode().iloc[0]
-
-
-print("Valores únicos para 'random_domain':")
-
-print(random_domain_unique)
-print("\nValores únicos para 'port':")
-
-print(port_unique)
-
-print("\nValores únicos para 'dns_record':")
-print(dns_record_unique)
-
-print("\nValores únicos para 'login_form':")
-print(login_form_unique)
-
-print("\nValores únicos para 'google_index':")
-print(google_index_unique)
-
-print(f"\nConteo total de filas en el dataset: {dataset_count}")
-
-print("\nMedia de las columnas numéricas:")
-print(mean_values)
-
-print("\nMediana de las columnas numéricas:")
-print(median_values)
-
-print("\nModa de las columnas:")
-print(mode_values)
-
-
-print("==================BALANCEO===============")
+  def algoritmo_sin_librerias(self, X, Y, w,b):
+    pass
+  def algoritmo_con_librerias(self, dataframe):
+    pass
