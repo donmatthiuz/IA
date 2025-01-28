@@ -114,6 +114,7 @@ y_predichas_mimodelo = regresion.algoritmo_sin_librerias(X=X_train, Y=y_train, w
 y_predichas_modelo_sklearn = regresion.algoritmo_con_librerias(X_train=X_train, Y_train=y_train, X_test=X_test)
 #Ahora vamos a predecir
 
+print("F1 SECORE METRICAS")
+print("Mi modelo:",f1_score(ytest=y_test, ypredichas=y_predichas_mimodelo))
+print("Modelo de SKLEARN:",f1_score(ytest=y_test, ypredichas=y_predichas_modelo_sklearn))
 
-print(f1_score(ytest=y_test, ypredichas=y_predichas_mimodelo))
-print(f1_score(ytest=y_test, ypredichas=y_predichas_modelo_sklearn))
