@@ -30,7 +30,7 @@ class Logistica():
       sigmoid = 1 / (1 + np.exp(-(np.dot(X, w) + b)))
       loss = -np.mean(Y * np.log(sigmoid) + (1 - Y) * np.log(1 - sigmoid))
       if epoch % 100 == 0:
-        print(f"Epoch {epoch}, Loss: {loss}")
+        print(f"Epoca actual {epoch}, Perdida: {loss}")
     y_prediccion = 1 / (1 + np.exp(-(np.dot(X_test, w) + b)))
     y_predichas = [1 if val >= 0.5 else 0 for val in y_prediccion]
     return y_predichas
