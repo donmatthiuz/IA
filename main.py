@@ -109,15 +109,10 @@ epocas = 7000
 
 regresion = Logistica(learning_rate=learning_rate, epocas=epocas)
 
-W, B = regresion.algoritmo_sin_librerias(X=X_train, Y=y_train, w=w, b=b)
-print(W ,B)
-
+y_predichas_mimodelo = regresion.algoritmo_sin_librerias(X=X_train, Y=y_train, w=w, b=b, X_test=X_test)
+y_predichas_modelo_sklearn = regresion.algoritmo_con_librerias(X_train=X_train, Y_train=y_train, X_test=X_test)
 #Ahora vamos a predecir
 
-y_prediccion = 1 / (1 + np.exp(-(np.dot(X_test, W) + B)))
-y_predichas = [1 if val >= 0.5 else 0 for val in y_prediccion]
 
-accuracy = accuracy_score(y_test, y_predichas)
-print(f"Accuracy: {accuracy:.4f}")
-
-print(classification_report(y_test, y_predichas))
+print(classification_report(y_test, y_predichas_mimodelo))
+print(classification_report(y_test, y_predichas_modelo_sklearn))
