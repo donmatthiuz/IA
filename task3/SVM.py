@@ -30,6 +30,8 @@ class SVM ():
         else:
           self.w -= self.delta_j_w_2(x_i, y[j], self.w, self.b)
           self.b -=  y[j] * self.learning_rate
+       if i % 100 == 0:
+         print(f"Epoca actual {i}, Perdida: {condition}")
     
     y_predichas = np.dot(X_test, self.w) - self.b
     return np.sign(y_predichas)
