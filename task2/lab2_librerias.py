@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import precision_recall_fscore_support
 
-file_path = "entrenamiento.txt"
+file_path = "task2\\entrenamiento.txt"
 
 data = []
 with open(file_path, "r", encoding="utf-8") as f:

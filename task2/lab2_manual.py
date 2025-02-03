@@ -6,7 +6,7 @@ from sklearn.metrics import precision_recall_fscore_support
 
 # Utilizamos solamente sklearn para repartir el dataset y para evaluar las métricas de prueba
 
-file_path = "entrenamiento.txt"
+file_path = "task2\\entrenamiento.txt"
 
 data = []
 with open(file_path, "r", encoding="utf-8") as f:
