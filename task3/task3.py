@@ -1,7 +1,8 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-from SVM import SVM, SVM2
+from SVM import SVM
+from sklearn import svm
 
 
 # Replace the path with your actual file path
@@ -54,28 +55,21 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.1, random_
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=42)
 
 # ENTRENAMIENTO 80%
-
 #Variables a Definir
 learning_rate = 0.001
 epocas = 1000
 lambda_par =0.01
 
-svm = SVM(learning_rate=learning_rate, epocas=epocas, lambda_par=lambda_par)
 
-svm.algoritmo_sin_librerias_fit(X=X_train, Y=y_train)
+## Sin librerias
+svm_manual = SVM(learning_rate=learning_rate, epocas=epocas, lambda_par=lambda_par)
+svm_manual.algoritmo_sin_librerias_fit(X=X_train, Y=y_train)
+y_manual_predichas = svm_manual.algoritmo_sin_librerias_prediccion(X_test=X_test)
 
-y_manual_predichas = svm.algoritmo_sin_librerias_prediccion(X_test=X_test)
-
-#y_librerias_predichas = svm.algoritmo_con_librerias(X_train=X_train, Y_train=y_train, X_test= X_test)
-#print(y_manual_predichas)
-
-# svm2 = SVM2()
-
-# svm2.fit(X_train, y_train)
-# ys = svm2.predict(X_test)
-print(y_manual_predichas)
-
-
+## COn librerias
+clf = svm.SVC()
+clf.fit(X_train, y_train)
+y_librerias_predichas  = clf.predict(X_test)
 
 
 

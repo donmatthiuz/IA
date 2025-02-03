@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn import svm
+
 
 class SVM ():
   def __init__(self, learning_rate , epocas, lambda_par):
@@ -37,7 +37,4 @@ class SVM ():
      y_predichas = np.dot(X_test, self.w) - self.b
      return np.sign(y_predichas)
 
-  def algoritmo_con_librerias(self, X_train, Y_train, X_test):
-    clf = svm.SVC()
-    clf.fit(X_train, Y_train)
-    return clf.predict(X_test)
+    
