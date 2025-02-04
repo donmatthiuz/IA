@@ -6,6 +6,8 @@ from sklearn import svm
 from sklearn.metrics import precision_recall_fscore_support,  f1_score
 from Tunning import Tunning
 from SVM import SVM_manual
+from grafica import visualize_svm
+
 # Reemplazamos por el path actual
 csv_file_path = 'task3\\high_diamond_ranked_10min.csv'
 from sklearn.model_selection import GridSearchCV
@@ -89,7 +91,7 @@ print(grid.best_params_)
 
 # Manual
 learning_rate = 0.001
-epocas = 4000
+epocas = 1000
 lambda_par =0.01
 
 svm_manual = SVM_manual(learning_rate=learning_rate, epocas=epocas, lambda_par=lambda_par)
@@ -120,7 +122,7 @@ print("F1 SCORE LIBRERIA: ",f1_score_lib)
 
 
 # ============  GRAFICAR ===================
-
+visualize_svm(X=X_train, y=y_trained_parametrized, clf=svm_manual)
 
 
 
