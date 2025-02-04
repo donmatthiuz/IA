@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class SVM ():
+class SVM_manual ():
   def __init__(self, learning_rate , epocas, lambda_par):
     self.learning_rate = learning_rate
     self.epocas = epocas

@@ -1,18 +1,22 @@
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-from SVM import SVM
 from sklearn import svm
-
-
-# Replace the path with your actual file path
+from sklearn.metrics import precision_recall_fscore_support,  f1_score
+from Tunning import Tunning
+from SVM import SVM_manual
+# Reemplazamos por el path actual
 csv_file_path = 'task3\\high_diamond_ranked_10min.csv'
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVC 
+  
 
 
 
 # ================== PARTE 3.1  ANALISIS EXPLORATORIO ===================
 
-# Load the CSV into a DataFrame
+# Cargamos el dataframe
 df = pd.read_csv(csv_file_path)
 
 
@@ -46,7 +50,7 @@ print(f"Muertes causadas por los Azules {df["blueKills"].min()} - {df["blueKills
 
 #=====================PARTE 3.2 Support Vector Machines  Clasificación de Partidas de League of Legends==============
 
-#Vamos a dividir en 2 test y entrenamiento
+#Vamos a dividir en 3 test , entrenamiento y 
 
 X = df[['blueAvgLevel','blueKills']].values
 Y = df['blueWins'].values
@@ -54,22 +58,68 @@ Y = df['blueWins'].values
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.1, random_state=42)
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=42)
 
-# ENTRENAMIENTO 80%
-#Variables a Definir
+
+# =================== TUNING 10% ==============================
+# PRIMERO CON LOS 10% de los datos vamos a hacer Tunnig en ambos casos
+
+# Con el modelo manual usaremos una clase llamada tunnig
+#   tunn = Tunning(X_val=X_val, X_Train=X_train, Y_train=y_train, y_val=y_val)
+#   tunn.encontrar_variables()
+
+# Estan desabilitadas ya que se tardan un monton en encontrar pero se encontro que
+#   lr: 0.001, ep: 2000, lambda: 0.01 -> fue el mejor al tener un acurrancy de 0.6775
+
+# Con el modelo de la libreria usaremos la libreria grid
+param_grid = {'C': [0.1, 1, 10, 100, 1000],  
+              'gamma': [1, 0.1, 0.01, 0.001, 0.0001], 
+              'kernel': ['rbf']}  
+  
+grid = GridSearchCV(SVC(), param_grid, refit = True, verbose = 3) 
+y_val_Trained = np.where(y_val <= 0, -1, 1)
+# fitting the model for grid search 
+grid.fit(X_val, y_val) 
+
+#iprimos los hiperparametros.
+print(grid.best_params_) 
+
+
+#======================= ENTRENAMIENTO 80% ===========================
+
+# Ahora lo entrenaremos usando los mejores parametros encontrados antes
+
+# Manual
 learning_rate = 0.001
-epocas = 1000
+epocas = 4000
 lambda_par =0.01
 
-
-## Sin librerias
-svm_manual = SVM(learning_rate=learning_rate, epocas=epocas, lambda_par=lambda_par)
+svm_manual = SVM_manual(learning_rate=learning_rate, epocas=epocas, lambda_par=lambda_par)
 svm_manual.algoritmo_sin_librerias_fit(X=X_train, Y=y_train)
-y_manual_predichas = svm_manual.algoritmo_sin_librerias_prediccion(X_test=X_test)
 
-## COn librerias
-clf = svm.SVC()
-clf.fit(X_train, y_train)
-y_librerias_predichas  = clf.predict(X_test)
+# Con librerias
+y_trained_parametrized = np.where(y_train <= 0, -1, 1 )
+clf = svm.SVC(C=1000, gamma=0.01, kernel='rbf')
+clf.fit(X_train, y_trained_parametrized)
+
+
+# ================ 10% TESTING =============================
+#ahora hacemos el testing y usaremos f1score para comparar despues entre las 2. 
+y_test_parametrized = np.where(y_test <= 0, -1, 1)
+
+# Manual
+y_predic_manual = svm_manual.algoritmo_sin_librerias_prediccion(X_test=X_test)
+f1_score_manual = f1_score(y_test_parametrized, y_predic_manual, average='macro')
+
+# Por codigo
+y_predic_lib = clf.predict(X_test)
+f1_score_lib = f1_score(y_test_parametrized, y_predic_lib, average='macro')
+
+
+# Como resultado nos da
+print("F1 SCORE MANUAL: ",f1_score_manual)
+print("F1 SCORE LIBRERIA: ",f1_score_lib)
+
+
+# ============  GRAFICAR ===================
 
 
 
