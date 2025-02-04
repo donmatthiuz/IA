@@ -39,8 +39,8 @@ print(unos["blueWins"].count())
 # Eligiremos el blueAvgLevel
 # Eligiremos el blueKills
 
-# Vamos a usar estas 2 debido a que se intuye que tener un nivel 
-# en el promedio de los azules y las muertes provocadas que puede 
+# Vamos a usar estas 2 debido a que se intuye que tener un nivel bueno entre los jugadores
+# Y tambien al tener muchas muertes causadas pueden provocar que gananen la partida
 
 
 #Mostramos el rango de los valores
