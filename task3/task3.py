@@ -6,7 +6,7 @@ from sklearn import svm
 from sklearn.metrics import precision_recall_fscore_support,  f1_score
 from Tunning import Tunning
 from SVM import SVM_manual
-from grafica import visualize_svm
+from grafica import graph_smv
 
 # Reemplazamos por el path actual
 csv_file_path = 'task3\\high_diamond_ranked_10min.csv'
@@ -122,7 +122,7 @@ print("F1 SCORE LIBRERIA: ",f1_score_lib)
 
 
 # ============  GRAFICAR ===================
-visualize_svm(X=X_train, y=y_trained_parametrized, clf=svm_manual)
+graph_smv(data_X=X_train, labels_y=y_trained_parametrized, model=svm_manual)
 
 
 
