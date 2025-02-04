@@ -71,3 +71,9 @@ precision, recall, f1, _ = precision_recall_fscore_support(y_test, predictions, 
 print(f"Precision: {precision:.4f}")
 print(f"Recall: {recall:.4f}")
 print(f"F1 Score: {f1:.4f}")
+
+# User input para nuevos mensajes a clasificar
+while True:
+    user_input = input("Ingrese un mensaje para clasificar: ")
+    prediction = nb_manual.predict(user_input)
+    print(f"Predicción: {prediction}")
