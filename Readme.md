@@ -48,7 +48,7 @@ Hay 2 codigos el de la task 2 y de la task 3.
 cd task_a_elegir
 ```
 - En task2.1y2.3 abre el archivo
-[Task 2.1 y 2.3](\task2.1y2.3\Lab3.ipynb)
+[Task 2.1 y 2.3](./task2.1y2.3/Lab3.ipynb)
 
 - En task2.2 ejecuta el archivo python
 
