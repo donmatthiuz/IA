@@ -171,7 +171,7 @@ print(X_sorted.head())
 X_train3, X_test3, y_train3, y_test3 = train_test_split(X, y, test_size=0.2, random_state=42)
 X_train3, X_val3, y_train3, y_val3 = train_test_split(X_train3, y_train3, test_size=0.1, random_state=42)
 
-selector = SelectKBest(f_classif, k=2) 
+selector = SelectKBest(f_classif, k=4) 
 selector.fit(X_train3, y_train3)
 
 X_train_selected = selector.transform(X_train3) 
