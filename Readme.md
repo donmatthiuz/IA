@@ -47,22 +47,14 @@ Hay 2 codigos el de la task 2 y de la task 3.
 ```sh
 cd task_a_elegir
 ```
-- En task2 ejecuta cada script.py
-- En este es algoritmo con librerias
-```sh
-python lab2_librerias.py
+- En task2.1y2.3 abre el archivo
+[Task 2.1 y 2.3](\task2.1y2.3\Lab3.ipynb)
 
-```
-- Tambien esta aqui el de manual
-```sh
-python lab2_manual.py
-```
+- En task2.2 ejecuta el archivo python
 
-- En task3 ejecuta el codigo usando el siguiente comando
-```sh
-python task3.py
+```python
+python main.py
 ```
-
 ## 5. Si quieres ver una explicacion mas detallada de cada inciso ve a 
 
-[Laboratorio 2](./Laboratorio2_Completado.ipynb)
+[Laboratorio 3](./Laboratorio3.ipynb)
