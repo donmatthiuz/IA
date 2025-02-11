@@ -1,3 +1,4 @@
+from matplotlib.pylab import set_printoptions
 import pandas as pd
 from sklearn import svm
 from sklearn.ensemble import ExtraTreesClassifier
@@ -10,12 +11,12 @@ import matplotlib.pyplot as plt
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.svm import SVC
-from sklearn.feature_selection import RFE, RFECV
+from sklearn.feature_selection import RFE, RFECV, SelectKBest, f_classif
 from sklearn.tree import DecisionTreeClassifier
 
 # De la anterior sabemos que estan balanceados. 
 #Obtenemos path
-csv_file_path = 'task3\\high_diamond_ranked_10min.csv'
+csv_file_path = 'task2.2\\high_diamond_ranked_10min.csv'
 df = pd.read_csv(csv_file_path)
 
 # ============== PRIMERA TECNICA PCA ==============
@@ -54,10 +55,15 @@ print(modelo_pca.explained_variance_ratio_)
 
 # Como podemos ver con los primeros 4 PCA se explican el 66% de los datos
 
-X_pca = pca_pipe.fit_transform(X) 
-X_pca = X_pca[:, :4]
-X_train, X_test, y_train, y_test = train_test_split(X_pca, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=42)
+
+scaler = StandardScaler()
+pca = PCA(n_components=7)
+X_train = pca.fit_transform(X_train)
+X_test = pca.transform(X_test)
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
 
 # Hacemos tunning
@@ -141,6 +147,54 @@ print(f1_score_pca)
 # Nos dio 0.71649434351695
 
 
+#====================== ANOVA ALGORITMO =============================
+
+test = SelectKBest(score_func=f_classif, k=4)
+fit = test.fit(X, y)
+set_printoptions(precision=3)
+print(fit.scores_)
+
+scores_df = pd.DataFrame({
+    'Feature': X.columns,
+    'Scores': fit.scores_
+})
+
+scores_df = scores_df.sort_values(by='Scores', ascending=False)
+
+print(scores_df)
+
+X_sorted = X[scores_df['Feature']]
+
+print(X_sorted.head())
 
 
+X_train3, X_test3, y_train3, y_test3 = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train3, X_val3, y_train3, y_val3 = train_test_split(X_train3, y_train3, test_size=0.1, random_state=42)
 
+selector = SelectKBest(f_classif, k=2) 
+selector.fit(X_train3, y_train3)
+
+X_train_selected = selector.transform(X_train3) 
+X_test_selected = selector.transform(X_test3)
+X_validator_selected = selector.transform(X_val3)
+
+param_grid = {'C': [0.1, 1, 10, 100, 1000, 2000],  
+              'gamma': [1, 0.1, 0.01, 0.001, 0.0001, 0.00001], 
+              'kernel': ['rbf']}  
+grid = GridSearchCV(SVC(), param_grid, refit = True, verbose = 3) 
+grid.fit(X_validator_selected, y_val3)
+
+
+print(grid.best_params_) 
+
+
+# ENTRENAMOS CON ANOVA
+clf = svm.SVC(C=1, gamma=0.00001, kernel='rbf')
+clf.fit(X_train_selected, y_train3)
+
+
+# TESTEAMOS CON ANOVA
+y_predic_lib3 = clf.predict(X_test_selected)
+f1_score_pca = f1_score(y_test3, y_predic_lib3, average='macro')
+print(f1_score_pca)
+# Nos dio 0.71649434351695
