@@ -41,7 +41,7 @@ def fix_birth_year(date_str):
     # Dividir el string por las barras
     parts = date_str.split('/')
     
-    # Asegurarse de que tiene tres partes
+    
     if len(parts) == 3:
         day, month, year = parts
         
@@ -50,7 +50,7 @@ def fix_birth_year(date_str):
             corrected_year = f'20{year}' if int(year) < 25 else f'19{year}'
             return f'{day}/{month}/{corrected_year}'
     
-    return date_str  # Si no se puede corregir, devolver la fecha original
+    return date_str  
 
 
 
@@ -69,11 +69,11 @@ if 'CustomerDOB' in df.columns:
     print(df[['CustomerID', 'Age']])
 
 
-# Verificar los valores nulos en la columna CustomerDOB
 
 
 
-# Rellenar CustAccountBalance con la mediana
+
+# Rellenar CustAccountBalance con la mediana para aplanar curva
 if 'CustAccountBalance' in df.columns:
     df['CustAccountBalance'].fillna(df['CustAccountBalance'].median(), inplace=True)
 
