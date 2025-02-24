@@ -219,7 +219,7 @@ def procesar_imagen(ruta):
     problem = MazeProblem(maze, start_pos, goal_positions)
     
     search = GraphSearch(problem, heuristica_euclidiana)
-    solution_path = search.a_Star()
+    solution_path = search.breadth_first_search()
 
     if solution_path:
         print("Camino para solucionar el laberinto:", solution_path)
@@ -227,4 +227,4 @@ def procesar_imagen(ruta):
     else:
         print("No se encontró solución.")
 
-procesar_imagen("Prueba Lab1.bmp")
+#procesar_imagen("Test2.bmp")
