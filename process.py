@@ -83,6 +83,31 @@ class GraphSearch:
                     if next_state not in visited:
                         queue.append((next_state, path + [state]))
 
+        return None
+    def depth_first_search(self):
+        start = self.problem.get_initial_state()
+        stack = [(start, [])]
+        visited = set()
+        visited.add(start)
+
+        while len(stack)>0:
+            nodoActual, path = stack.pop()
+            
+
+            if self.problem.goal_test(nodoActual):
+                return path + [nodoActual]
+            for action in self.problem.actions(nodoActual):  
+                next_state = self.get_next_state(nodoActual, action)  
+                if next_state not in visited:
+                    stack.append((next_state, path + [nodoActual]))
+                    visited.add(next_state)
+            
+            
+
+
+
+
+
         return None  
 
     def get_next_state(self, state, action):

@@ -15,9 +15,11 @@ def dibujar_camino(matriz, camino, factor_escala=8):
         for j in range(matriz.shape[1]):
             imagen[i, j] = colores[matriz[i, j]]
 
-    
+    inicio = camino[0]
+    final = camino[-1]
     for (x, y) in camino:
-        imagen[x, y] = colores["camino"]
+        if (x, y) != inicio and (x, y) != final:
+            imagen[x, y] = colores["camino"]
 
     plt.figure(figsize=(matriz.shape[1] // factor_escala, matriz.shape[0] // factor_escala))
     plt.imshow(imagen, interpolation="nearest")
