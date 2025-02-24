@@ -3,6 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 from collections import deque
 from abc import ABC, abstractmethod
+from graphic import dibujar_camino
 
 class SearchProblem(ABC):
     @abstractmethod
@@ -171,6 +172,7 @@ def procesar_imagen(ruta):
 
     if solution_path:
         print("Camino para solucionar el laberinto:", solution_path)
+        dibujar_camino(matriz=matriz, camino=solution_path)
     else:
         print("No se encontró solución.")
 
