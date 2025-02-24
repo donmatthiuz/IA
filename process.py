@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from collections import deque
 from abc import ABC, abstractmethod
 from graphic import dibujar_camino
+from Euristicas import heuristica_euclidiana, heuristica_manhattan
+import heapq 
 
 class SearchProblem(ABC):
     @abstractmethod
@@ -58,8 +60,9 @@ class MazeProblem(SearchProblem):
     
 class GraphSearch:
     
-    def __init__(self, problem):
+    def __init__(self, problem, heuristica = None):
         self.problem = problem
+        self.heuristica = heuristica
 
     def breadth_first_search(self):
         start = self.problem.get_initial_state()
@@ -92,8 +95,6 @@ class GraphSearch:
 
         while len(stack)>0:
             nodoActual, path = stack.pop()
-            
-
             if self.problem.goal_test(nodoActual):
                 return path + [nodoActual]
             for action in self.problem.actions(nodoActual):  
@@ -101,14 +102,39 @@ class GraphSearch:
                 if next_state not in visited:
                     stack.append((next_state, path + [nodoActual]))
                     visited.add(next_state)
-            
-            
+        return None  
+    
+    def a_Star(self):
+        start = self.problem.get_initial_state()
+        goal = list(self.problem.goals)[0] 
 
+        lista_abiertos = []  
+        heapq.heappush(lista_abiertos, (0, start, [])) 
 
+        g_costs = {start: 0} 
+        visited = set()
 
+        while lista_abiertos:
+            _, nodo_actual, path = heapq.heappop(lista_abiertos)
 
+            if self.problem.goal_test(nodo_actual):
+                return path + [nodo_actual]
+
+            if nodo_actual in visited:
+                continue
+            visited.add(nodo_actual)
+
+            for action in self.problem.actions(nodo_actual):
+                next_state = self.get_next_state(nodo_actual, action)
+                new_cost = g_costs[nodo_actual] + self.problem.step_cost(nodo_actual, action, next_state)
+
+                if next_state not in g_costs or new_cost < g_costs[next_state]:
+                    g_costs[next_state] = new_cost
+                    f_cost = new_cost + self.heuristica(next_state, goal)
+                    heapq.heappush(lista_abiertos, (f_cost, next_state, path + [nodo_actual]))
 
         return None  
+
 
     def get_next_state(self, state, action):
         x, y = state
@@ -192,8 +218,8 @@ def procesar_imagen(ruta):
 
     problem = MazeProblem(maze, start_pos, goal_positions)
     
-    search = GraphSearch(problem)
-    solution_path = search.breadth_first_search()
+    search = GraphSearch(problem, heuristica_euclidiana)
+    solution_path = search.a_Star()
 
     if solution_path:
         print("Camino para solucionar el laberinto:", solution_path)
