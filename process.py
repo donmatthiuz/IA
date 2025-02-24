@@ -227,4 +227,4 @@ def procesar_imagen(ruta):
     else:
         print("No se encontró solución.")
 
-procesar_imagen("Test.bmp")
+procesar_imagen("Prueba Lab1.bmp")
