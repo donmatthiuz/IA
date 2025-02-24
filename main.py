@@ -55,7 +55,7 @@ def mostrar_menu_euristica():
 """)
 def menu():
     incio1_ = True
-    inicio2_ = True
+   
     while incio1_:
         mostrar_menu_imagenes()
         opcion_imagen = input(f"{BLUE}Selecciona una imagen:{RESET} ")
@@ -63,11 +63,12 @@ def menu():
         if opcion_imagen in ["1", "2", "3"]:
             imagen_name = diccionario_imagenes[int(opcion_imagen)]
             imagen = cargar_imagen(imagen_name)
-            matriz, inicio, metas, filas, cols = imagen_a_matriz(imagen, tam_bloque=10)
+            matriz, inicio, metas, filas, cols = imagen_a_matriz(imagen, tam_bloque=9)
             dibujar_matriz(matriz)
             if inicio is None or not metas:
               print("Error: La imagen no tiene un inicio o metas válidas.")
               break
+            inicio2_ = True
             while inicio2_:
                 mostrar_menu_algoritmos()
                 opcion_algoritmo = input(f"{BLUE}Elige un algoritmo:{RESET} ")
@@ -93,7 +94,8 @@ def menu():
                       euristica = input(f"{BLUE}Elige una heuristica para A*:{RESET} ")
                       
                       if euristica == "1":
-                          search = GraphSearch(problem,heuristica_manhattan)
+                          search = GraphSearch(problem,heuristica_manhattan
+                          )
                           solution_path = search.a_Star()
                       elif euristica == "2":
                           search = GraphSearch(problem,heuristica_euclidiana)
