@@ -1,0 +1,34 @@
+import numpy as np
+import random
+
+#Definir el entorno
+
+#Semilla para replicar el entorno
+np.random.seed(42)
+random.seed(42)
+
+dimension = 4
+num_hoyos = random.randint(1, 3)
+
+posiciones_inicio = [(0, 0), (0, 3), (3, 0), (3, 3)]
+posiciones_meta = [(3, 3), (3, 0), (0, 3), (0, 0)]
+
+indice = random.randint(0, 3)
+inicio = posiciones_inicio[indice]
+meta = posiciones_meta[indice]
+
+# Generar hoyos aleatorios
+posiciones_posibles = [(i, j) for i in range(dimension) for j in range(dimension) if (i, j) != inicio and (i, j) != meta]
+hoyos = random.sample(posiciones_posibles, num_hoyos)
+
+def imprimir_entorno():
+    entorno = [['O' for _ in range(dimension)] for _ in range(dimension)]
+    entorno[inicio[0]][inicio[1]] = 'I'  # Inicio
+    entorno[meta[0]][meta[1]] = 'M'  # Meta
+    for h in hoyos:
+        entorno[h[0]][h[1]] = 'X'  # Hoyos
+    for fila in entorno:
+        print(" ".join(fila))
+
+print("Frozen Lake:")
+imprimir_entorno()
