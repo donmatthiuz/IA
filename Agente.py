@@ -5,23 +5,26 @@ import matplotlib.patches as patches
 class FrozenLake:
     def __init__(self, filename, reward=None):
         if reward is None:
-            reward = {0: 0, 1: 1.0, -1.0: -1.0}
+            reward = {0: 0, 1: 1.0, 2: -1.0}
 
-        ecode = {'O': 0, 'M': 1.0, 'X': -1.0, 'I': 0.0}
+        ecode = {'O': 0, 'M': 1, 'X': 2, 'I': 0}
         file = open(filename)
         self.map = np.array([list(s.strip().split(",")) for s in file.readlines()])
         
         zero_matrix = np.zeros((self.map.shape[0], self.map.shape[1]), dtype=int)
 
-       
+        self.posicion_inicial = (2, 0)
+
         for r in range(self.map.shape[0]):
             for c in range(self.map.shape[1]):
                 valor = ecode[self.map[r, c]]
-                
+                if self.map[r, c] == 'I':
+                    self.posicion_inicial = (r,c)
                 zero_matrix[r, c] = valor
 
         self.map = []
         self.map = zero_matrix
+        print(self.posicion_inicial)
         print(self.map)
        
         self.num_rows = self.map.shape[0]
@@ -35,7 +38,7 @@ class FrozenLake:
     def get_state_from_pos(self, pos):
         return pos[0] * self.num_cols + pos[1]
 
-    def get_transition_model(self, random_rate=0.2):
+    def get_transition_model(self, random_rate=0.10):
         transition_model = np.zeros((self.num_states, self.num_actions, self.num_states))
         for r in range(self.num_rows):
             for c in range(self.num_cols):
@@ -75,8 +78,8 @@ class FrozenLake:
     def generate_random_policy(self):
         return np.random.randint(self.num_actions, size=self.num_states)
 
-    def execute_policy(self, policy, start_pos=(2, 0), max_steps=20000000):
-        s = self.get_state_from_pos(start_pos)
+    def execute_policy(self, policy, max_steps=20000):
+        s = self.get_state_from_pos(self.posicion_inicial)
         total_reward = 0
         state_history = [s]
         steps = 0  
@@ -92,7 +95,7 @@ class FrozenLake:
                 break
             steps += 1
 
-        return total_reward, state_history  # Ahora devuelve el historial de estados
+        return total_reward, state_history  
 
     def get_pos_from_state(self, state):
         return state // self.num_cols, state % self.num_cols
@@ -109,11 +112,14 @@ class FrozenLake:
                 cell_value = self.map[r, c]
                 color = "white"
                 if cell_value == 0:
-                    color = "cyan"  # Estado de recompensa positiva
-                elif cell_value == -1.0:
-                    color = "black"  # Estado de castigo
+                    color = "cyan"  
+                elif cell_value == 2:
+                    color = "black" 
                 elif cell_value == 1:
-                    color = "green"  # Obstáculo
+                    color = "green"
+                
+                if (r,c) == self.posicion_inicial:
+                    color = "yellow"
                 rect = patches.Rectangle((c - 0.5, self.num_rows - r - 1.5), 1, 1, linewidth=1, edgecolor="black", facecolor=color)
                 ax.add_patch(rect)
 
@@ -122,7 +128,7 @@ class FrozenLake:
         for state in state_history:
             r, c = self.get_pos_from_state(state)
             path_x.append(c)
-            path_y.append(self.num_rows - r - 1)  # Invertimos para que coincida con el gráfico
+            path_y.append(self.num_rows - r - 1)  
 
         ax.plot(path_x, path_y, marker="o", color="blue", markersize=8, linestyle="-", linewidth=2, label="Recorrido")
         ax.legend()
@@ -130,14 +136,4 @@ class FrozenLake:
 
 
 
-ex = FrozenLake(filename='.\\frozen_lake.csv')
 
-policy = ex.generate_random_policy()
-print("Política aleatoria generada:", policy)
-
-
-reward, state_history = ex.execute_policy(policy, start_pos=(0, 0))
-print("Recompensa obtenida:", reward)
-
-
-ex.plot_grid(state_history)
