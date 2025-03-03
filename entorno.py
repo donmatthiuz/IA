@@ -1,9 +1,10 @@
 import numpy as np
 import random
+import csv
 
-#Definir el entorno
+# Definir el entorno
 
-#Semilla para replicar el entorno
+# Semilla para replicar el entorno
 np.random.seed(42)
 random.seed(42)
 
@@ -27,8 +28,17 @@ def imprimir_entorno():
     entorno[meta[0]][meta[1]] = 'M'  # Meta
     for h in hoyos:
         entorno[h[0]][h[1]] = 'X'  # Hoyos
+    
+    # Imprimir el entorno en consola
     for fila in entorno:
         print(" ".join(fila))
+    
+    # Guardar el entorno en un archivo CSV
+    with open('frozen_lake.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(entorno)
 
 print("Frozen Lake:")
 imprimir_entorno()
+
+
