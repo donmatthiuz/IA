@@ -1,7 +1,7 @@
 import gymnasium as gym
 
 class FrozenLakeMDP:
-    def __init__(self, nombre_entorno="FrozenLake-v1", es_resbaladizo=True, alpha=0.8, gamma=0.95, epsilon=0.2):
+    def __init__(self, nombre_entorno="FrozenLake-v1", es_resbaladizo=True, alpha=0.8, gamma=0.95, epsilon=0.5):
       
       
         self.entorno = gym.make(nombre_entorno, is_slippery=es_resbaladizo)

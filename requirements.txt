@@ -1,3 +1,6 @@
 numpy
 gymnasium
 pygame
+IPython
+seaborn
+matplotlib

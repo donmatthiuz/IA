@@ -18,10 +18,10 @@ class Qlearning(RL):
                 next_state, reward, done, truncated, info = self.env.step(action)
                 
 
-                best_next_action = np.argmax(self.Q[next_state])  # Acción con el mayor valor de Q
+                best_next_action = np.argmax(self.Q[next_state])  
                 self.Q[state, action] += self.alpha * (reward + self.gamma * self.Q[next_state, best_next_action] - self.Q[state, action])
                 
-                # Actualizar el estado
+               
                 state = next_state
 
             if episode % 100 == 0:
@@ -86,11 +86,11 @@ class Sarsa(RL):
             steps = 0
 
             while not done:
-                action = np.argmax(self.Q[state])  # Tomar la acción con el mayor valor de Q
+                action = np.argmax(self.Q[state])  
                 next_state, reward, done, truncated, info = self.env.step(action)
                 steps += 1
 
-                if reward == 1:  # Si llegó a la meta
+                if reward == 1: 
                     successful_episodes += 1
                     break
 
