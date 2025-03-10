@@ -6,9 +6,9 @@ class RL(abc.ABC):
     def __init__(self, env, alpha=0.8, gamma=0.95, epsilon=0.5):
         
         self.env = env
-        self.alpha = alpha  # Tasa de aprendizaje
-        self.gamma = gamma  # Factor de descuento
-        self.epsilon = epsilon  # Probabilidad de exploración
+        self.alpha = alpha 
+        self.gamma = gamma 
+        self.epsilon = epsilon 
         self.Q = np.zeros([env.observation_space.n, env.action_space.n])  # Tabla Q inicializada a ceros
 
     @abc.abstractmethod

@@ -5,7 +5,7 @@ from FrozenLakeMDP import FrozenLakeMDP
 env = FrozenLakeMDP()
 
 
-qlearning_agent = Qlearning(env.entorno, alpha=env.alpha, gamma=env.gamma, 
+qlearning_agent = Sarsa(env.entorno, alpha=env.alpha, gamma=env.gamma, 
                             epsilon=env.epsilon)
 
 
