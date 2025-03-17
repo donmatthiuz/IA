@@ -36,20 +36,20 @@ class ConnectFourGame:
         self.draw_board()
         self.running = True
     
-    def ver_posiciones_vacias(self):
+    def ver_posiciones_vacias(self, board):
         valid_locations = []
         for col in range(COLS):
-            if self.is_valid_move(col):
+            if self.is_valid_move(board,col):
                 valid_locations.append(col)
         return valid_locations
     
-    def obtener_siguiente_row_abierta(self, col):
+    def obtener_siguiente_row_abierta(self,board, col):
         for r in range(ROWS):
-            if self.board[r][col] == 0:
+            if board[r][col] == 0:
                 return r
     
-    def es_nodo_terminal(self):
-        return self.check_winner() or len(self.ver_posiciones_vacias()) == 0
+    def es_nodo_terminal(self, board):
+        return self.check_winner(board) or len(self.ver_posiciones_vacias(board)) == 0
 
     def draw_board(self):
         self.screen.fill(BLACK)
@@ -60,13 +60,13 @@ class ConnectFourGame:
                 pygame.draw.circle(self.screen, color, (c * SQUARESIZE + SQUARESIZE // 2, (r + 1) * SQUARESIZE + SQUARESIZE // 2), RADIUS)
         pygame.display.update()
 
-    def is_valid_move(self, col):
-        return self.board[0, col] == 0
+    def is_valid_move(self, board, col):
+        return board[0, col] == 0
 
-    def drop_piece(self, col):
+    def drop_piece(self, board, col):
         for row in range(ROWS - 1, -1, -1):
-            if self.board[row, col] == 0:
-                self.board[row, col] = self.current_player
+            if board[row, col] == 0:
+                board[row, col] = self.current_player
                 return True
         return False
     
@@ -85,12 +85,12 @@ class ConnectFourGame:
 
         return score
     
-    def punta_posicion(self, board, oponenete):
+    def punta_posicion(self, board, mio, oponenete):
         score = 0
 
         ## Score center column
         center_array = [int(i) for i in list(board[:, COLS//2])]
-        center_count = center_array.count(self.current_player)
+        center_count = center_array.count(mio)
         score += center_count * 3
 
         ## Score Horizontal
@@ -120,26 +120,26 @@ class ConnectFourGame:
 
         return score
 
-    def check_winner(self):
+    def check_winner(self, board):
         for r in range(ROWS):
             for c in range(COLS - 3):
-                if self.check_line(self.board[r, c:c + 4]):
-                    return self.board[r, c]
+                if self.check_line(board[r, c:c + 4]):
+                    return board[r, c]
 
         for r in range(ROWS - 3):
             for c in range(COLS):
-                if self.check_line(self.board[r:r + 4, c]):
-                    return self.board[r, c]
+                if self.check_line(board[r:r + 4, c]):
+                    return board[r, c]
 
         for r in range(ROWS - 3):
             for c in range(COLS - 3):
-                if self.check_line([self.board[r + i, c + i] for i in range(4)]):
-                    return self.board[r, c]
+                if self.check_line([board[r + i, c + i] for i in range(4)]):
+                    return board[r, c]
 
         for r in range(3, ROWS):
             for c in range(COLS - 3):
-                if self.check_line([self.board[r - i, c + i] for i in range(4)]):
-                    return self.board[r, c]
+                if self.check_line([board[r - i, c + i] for i in range(4)]):
+                    return board[r, c]
 
         return 0
 
@@ -162,10 +162,10 @@ class ConnectFourGameHuman(ConnectFourGame):
                     pygame.display.update()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     col = event.pos[0] // SQUARESIZE
-                    if self.is_valid_move(col):
-                        self.drop_piece(col)
+                    if self.is_valid_move(self.board,col):
+                        self.drop_piece(self.board,col)
                         self.draw_board()
-                        winner = self.check_winner()
+                        winner = self.check_winner(self.board)
                         print(winner)
                         if winner:
                             print(f"¡Jugador {winner} gana!")
@@ -192,10 +192,10 @@ class ConnectFourGameAI(ConnectFourGame):
 
                 elif event.type == pygame.MOUSEBUTTONDOWN and self.current_player == 1:
                     col = event.pos[0] // SQUARESIZE
-                    if self.is_valid_move(col):
-                        self.drop_piece(col)
+                    if self.is_valid_move(self.board,col):
+                        self.drop_piece(self.board,col)
                         self.draw_board()
-                        if self.check_winner():
+                        if self.check_winner(self.board):
                             print("¡Jugador 1 gana!")
                             label = self.myfont.render(f"¡Jugador 1 gana!", 1, WHITE)
                             self.screen.blit(label, (40,10))
@@ -206,10 +206,10 @@ class ConnectFourGameAI(ConnectFourGame):
                             self.switch_player()
                 elif self.current_player == 2:
                     pygame.time.delay(500)
-                    col, score = minimax(self, 5, -math.inf, math.inf, True, self.current_player, 1)
-                    self.drop_piece(col)
+                    col, score = minimax(self, self.board,5, -math.inf, math.inf, True, 2, 1)
+                    self.drop_piece(self.board,col)
                     self.draw_board()
-                    if self.check_winner():
+                    if self.check_winner(self.board):
                         label = self.myfont.render(f"Baboso te gano la IA jajajaj", 1, WHITE)
                         self.screen.blit(label, (5,5))
                         pygame.display.update()
