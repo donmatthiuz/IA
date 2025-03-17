@@ -1,44 +1,47 @@
-import math
 import random
 
-import numpy as np
+class Agent:
+    def __init__(self, player_number):
+        self.player_number = player_number
+        self.opponent_number = 3 - player_number  # Si el jugador es 1, el oponente es 2 y viceversa
+    
+    def minimax(self, game, depth, is_maximizing_player):
+        
+        if depth == 0 or game.es_nodo_terminal(game.board):
+            return game.punta_posicion(game.board, self.player_number, self.opponent_number)
+        
+        if is_maximizing_player:
+            
+            max_eval = float('-inf')
+            valid_moves = game.ver_posiciones_vacias(game.board)
+            best_move = None
+            for col in valid_moves:
+                # Simulamos el movimiento
+                row = game.obtener_siguiente_row_abierta(game.board, col)
+                game.board[row, col] = self.player_number
+                eval = self.minimax(game, depth - 1, False)
+                game.board[row, col] = 0  # Deshacer el movimiento
+                
+                if eval > max_eval:
+                    max_eval = eval
+                    best_move = col
+            return max_eval if depth > 0 else best_move
+        else:
+        
+            min_eval = float('inf')
+            valid_moves = game.ver_posiciones_vacias(game.board)
+            best_move = None
+            for col in valid_moves:
+        
+                row = game.obtener_siguiente_row_abierta(game.board, col)
+                game.board[row, col] = self.opponent_number
+                eval = self.minimax(game, depth - 1, True)
+                game.board[row, col] = 0  # Deshacer el movimiento
+                
+                if eval < min_eval:
+                    min_eval = eval
+                    best_move = col
+            return min_eval if depth > 0 else best_move
 
-def minimax(mi_juego,
-						board, 
-						depth, 
-						alpha, 
-						beta, 
-						maximizingPlayer, IA, Enemigo):
-	valid_locations = mi_juego.ver_posiciones_vacias(board)
-	
-	is_terminal = mi_juego.es_nodo_terminal(board)
-	if depth == 0 or is_terminal:
-		if is_terminal:
-			ganador_es = mi_juego.check_winner(board)
-			if ganador_es == IA:
-				return (None, 100000000000000)
-			elif ganador_es == Enemigo:
-				return (None, -10000000000000)
-			else: # empate si existe jajaj xd
-				return (None, 0)
-		else: # Depth is zero
-			return (None, mi_juego.punta_posicion(board, IA,Enemigo))
-	if maximizingPlayer:
-		value = -math.inf
-		column = random.choice(valid_locations)
-		print(valid_locations)
-		for col in valid_locations:			
-			b_copy = mi_juego.board.copy()
-			mi_juego.drop_piece(b_copy,column)
-			new_score = minimax(mi_juego, b_copy,depth-1, alpha, beta, True, IA, Enemigo)[1]
-			if new_score > value:
-				value = new_score
-				column = column
-			alpha = max(alpha, value)
-			if alpha >= beta:
-				break
-		return column, value
-	
-
-
-  
+    def get_best_move(self, game, depth=4):
+        return self.minimax(game, depth, True)

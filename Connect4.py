@@ -2,7 +2,7 @@ import math
 import numpy as np
 import pygame
 import sys
-from agente import minimax
+from agente import Agent
 # Definir colores
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -178,7 +178,15 @@ class ConnectFourGameHuman(ConnectFourGame):
                         self.switch_player()
         pygame.quit()
 
+
+        
+
+
 class ConnectFourGameAI(ConnectFourGame):
+    def __init__(self):
+        super().__init__()
+        self.agent = Agent(player_number=2)  # El jugador 2 es la IA
+
     def run(self):
         while self.running:
             for event in pygame.event.get():
@@ -192,32 +200,33 @@ class ConnectFourGameAI(ConnectFourGame):
 
                 elif event.type == pygame.MOUSEBUTTONDOWN and self.current_player == 1:
                     col = event.pos[0] // SQUARESIZE
-                    if self.is_valid_move(self.board,col):
-                        self.drop_piece(self.board,col)
+                    if self.is_valid_move(self.board, col):
+                        self.drop_piece(self.board, col)
                         self.draw_board()
                         if self.check_winner(self.board):
                             print("¡Jugador 1 gana!")
                             label = self.myfont.render(f"¡Jugador 1 gana!", 1, WHITE)
-                            self.screen.blit(label, (40,10))
+                            self.screen.blit(label, (40, 10))
                             pygame.display.update()
                             pygame.time.delay(2000)
                             self.running = False
                         else:
                             self.switch_player()
                 elif self.current_player == 2:
-                    pygame.time.delay(500)
-                    col, score = minimax(self, self.board,5, -math.inf, math.inf, True, 2, 1)
-                    self.drop_piece(self.board,col)
+                    # La IA juega (jugador 2)
+                    pygame.time.delay(500)  # Retraso para simular el tiempo de la IA
+
+                    # Utilizamos el agente para que realice su jugada
+                    best_move = self.agent.get_best_move(self, depth=5)  # Profundidad de 5 para el Minimax
+                    self.drop_piece(self.board, best_move)
                     self.draw_board()
                     if self.check_winner(self.board):
-                        label = self.myfont.render(f"Baboso te gano la IA jajajaj", 1, WHITE)
-                        self.screen.blit(label, (5,5))
+                        label = self.myfont.render(f"Baboso, ¡la IA te ganó!", 1, WHITE)
+                        self.screen.blit(label, (5, 5))
                         pygame.display.update()
                         pygame.time.delay(2000)
                         self.running = False
                     else:
                         self.switch_player()
+
         pygame.quit()
-        
-
-
