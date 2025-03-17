@@ -1,7 +1,8 @@
+import math
 import numpy as np
 import pygame
 import sys
-
+from agente import minimax
 # Definir colores
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -18,6 +19,11 @@ RADIUS = SQUARESIZE // 2 - 5
 WIDTH = COLS * SQUARESIZE
 HEIGHT = (ROWS + 1) * SQUARESIZE
 SIZE = (WIDTH, HEIGHT)
+WINDOW_LENGTH = 4
+
+import numpy as np
+import pygame
+import random
 
 class ConnectFourGame:
     def __init__(self):
@@ -29,6 +35,21 @@ class ConnectFourGame:
         pygame.display.set_caption("Connect Four")
         self.draw_board()
         self.running = True
+    
+    def ver_posiciones_vacias(self):
+        valid_locations = []
+        for col in range(COLS):
+            if self.is_valid_move(col):
+                valid_locations.append(col)
+        return valid_locations
+    
+    def obtener_siguiente_row_abierta(self, col):
+        for r in range(ROWS):
+            if self.board[r][col] == 0:
+                return r
+    
+    def es_nodo_terminal(self):
+        return self.check_winner() or len(self.ver_posiciones_vacias()) == 0
 
     def draw_board(self):
         self.screen.fill(BLACK)
@@ -48,6 +69,56 @@ class ConnectFourGame:
                 self.board[row, col] = self.current_player
                 return True
         return False
+    
+
+    def evaluar_jugada(self, window, pieza_oponente):
+        score = 0
+        if window.count(self.current_player) == 4:
+            score += 100
+        elif window.count(self.current_player) == 3 and window.count(0) == 1:
+            score += 5
+        elif window.count(self.current_player) == 2 and window.count(0) == 2:
+            score += 2
+
+        if window.count(pieza_oponente) == 3 and window.count(0) == 1:
+            score -= 4
+
+        return score
+    
+    def punta_posicion(self, board, oponenete):
+        score = 0
+
+        ## Score center column
+        center_array = [int(i) for i in list(board[:, COLS//2])]
+        center_count = center_array.count(self.current_player)
+        score += center_count * 3
+
+        ## Score Horizontal
+        for r in range(ROWS):
+            row_array = [int(i) for i in list(board[r,:])]
+            for c in range(COLS-3):
+                window = row_array[c:c+WINDOW_LENGTH]
+                score += self.evaluar_jugada(window, oponenete)
+
+       
+        for c in range(COLS):
+            col_array = [int(i) for i in list(board[:,c])]
+            for r in range(ROWS-3):
+                window = col_array[r:r+WINDOW_LENGTH]
+                score += self.evaluar_jugada(window, oponenete)
+
+        
+        for r in range(ROWS-3):
+            for c in range(COLS-3):
+                window = [board[r+i][c+i] for i in range(WINDOW_LENGTH)]
+                score += self.evaluar_jugada(window, oponenete)
+
+        for r in range(ROWS-3):
+            for c in range(COLS-3):
+                window = [board[r+3-i][c+i] for i in range(WINDOW_LENGTH)]
+                score += self.evaluar_jugada(window, oponenete)
+
+        return score
 
     def check_winner(self):
         for r in range(ROWS):
@@ -78,6 +149,7 @@ class ConnectFourGame:
     def switch_player(self):
         self.current_player = 3 - self.current_player
 
+class ConnectFourGameHuman(ConnectFourGame):
     def run(self):
         while self.running:
             for event in pygame.event.get():
@@ -94,6 +166,7 @@ class ConnectFourGame:
                         self.drop_piece(col)
                         self.draw_board()
                         winner = self.check_winner()
+                        print(winner)
                         if winner:
                             print(f"¡Jugador {winner} gana!")
                             label = self.myfont.render(f"¡Jugador {winner} gana!", 1, WHITE)
@@ -104,31 +177,47 @@ class ConnectFourGame:
                             self.running = False
                         self.switch_player()
         pygame.quit()
+
+class ConnectFourGameAI(ConnectFourGame):
+    def run(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.MOUSEMOTION and self.current_player == 1:
+                    pygame.draw.rect(self.screen, BLACK, (0, 0, WIDTH, SQUARESIZE))
+                    x_pos = event.pos[0]
+                    pygame.draw.circle(self.screen, RED if self.current_player == 1 else YELLOW, (x_pos, SQUARESIZE // 2), RADIUS)
+                    pygame.display.update()
+
+                elif event.type == pygame.MOUSEBUTTONDOWN and self.current_player == 1:
+                    col = event.pos[0] // SQUARESIZE
+                    if self.is_valid_move(col):
+                        self.drop_piece(col)
+                        self.draw_board()
+                        if self.check_winner():
+                            print("¡Jugador 1 gana!")
+                            label = self.myfont.render(f"¡Jugador 1 gana!", 1, WHITE)
+                            self.screen.blit(label, (40,10))
+                            pygame.display.update()
+                            pygame.time.delay(2000)
+                            self.running = False
+                        else:
+                            self.switch_player()
+                elif self.current_player == 2:
+                    pygame.time.delay(500)
+                    col, score = minimax(self, 5, -math.inf, math.inf, True, self.current_player, 1)
+                    self.drop_piece(col)
+                    self.draw_board()
+                    if self.check_winner():
+                        label = self.myfont.render(f"Baboso te gano la IA jajajaj", 1, WHITE)
+                        self.screen.blit(label, (5,5))
+                        pygame.display.update()
+                        pygame.time.delay(2000)
+                        self.running = False
+                    else:
+                        self.switch_player()
+        pygame.quit()
         
 
 
-def main():
-    while True:
-        
-        print("""
-        ╔════════════════════════╗
-        ║     Connect Four       ║
-        ╠════════════════════════╣
-        ║ 1. Jugar contra otro   ║
-        ║ 2. Salir               ║
-        ╚════════════════════════╝
-        """)
-        choice = input("Selecciona una opción: ")
-        if choice == "1":
-            game = ConnectFourGame()
-            game.run()
-        elif choice == "2":
-            print("Saliendo del juego...")
-            break
-        else:
-            print("Opción inválida. Intenta de nuevo.")
-            input("Presiona Enter para continuar...")
-
-
-if __name__ == "__main__":
-    main()
