@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 class ConnectFourBoard:
     def __init__(self, rows=6, cols=7):
@@ -65,17 +66,52 @@ class ConnectFour(ConnectFourBoard):
         """Verifica si una línea de 4 casillas contiene el mismo número (1 o 2)."""
         return all(x == line[0] and x != 0 for x in line)
 
-game = ConnectFour()
-game.print_board()
 
-game.drop_piece(3)
-game.print_board()
+def clear_screen():
+    os.system("cls" if os.name == "nt" else "clear")
 
-game.drop_piece(3)
-game.print_board()
+def play_game():
+    game = ConnectFour()
+    while True:
+        clear_screen()
+        game.print_board()
+        print(f"Jugador {game.current_player}, elige una columna (0-{game.cols - 1}):")
+        try:
+            col = int(input().strip())
+            if col < 0 or col >= game.cols or not game.is_valid_move(col):
+                raise ValueError("Movimiento no válido. Intenta de nuevo.")
+            game.drop_piece(col)
+            winner = game.check_winner()
+            if winner:
+                game.print_board()
+                print(f"¡Jugador {winner} gana!")
+                input("Presiona Enter para continuar...")
+                clear_screen()
+                break
+        except ValueError as e:
+            print(e)
+            input("Presiona Enter para continuar...")
 
-game.drop_piece(4)
-game.print_board()
+def main():
+    while True:
+        clear_screen()
+        print("""
+        ╔════════════════════════╗
+        ║     Connect Four       ║
+        ╠════════════════════════╣
+        ║ 1. Jugar contra otro   ║
+        ║ 2. Salir               ║
+        ╚════════════════════════╝
+        """)
+        choice = input("Selecciona una opción: ")
+        if choice == "1":
+            play_game()
+        elif choice == "2":
+            print("Saliendo del juego...")
+            break
+        else:
+            print("Opción inválida. Intenta de nuevo.")
+            input("Presiona Enter para continuar...")
 
-game.drop_piece(2)
-game.print_board()
+if __name__ == "__main__":
+    main()
