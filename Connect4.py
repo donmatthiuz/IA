@@ -183,9 +183,11 @@ class ConnectFourGameHuman(ConnectFourGame):
 
 
 class ConnectFourGameAI(ConnectFourGame):
-    def __init__(self):
+    def __init__(self, play_pruning = False):
         super().__init__()
         self.agent = MinimaxAgent(depth=5)
+        self.play_pruning = play_pruning
+        
 
     def run(self):
         while self.running:
@@ -217,12 +219,67 @@ class ConnectFourGameAI(ConnectFourGame):
                     pygame.time.delay(500)  # Retraso para simular el tiempo de la IA
 
                     # Utilizamos el agente para que realice su jugada
-                    best_move = self.agent.get_best_move(self.board)
+                    best_move = self.agent.get_best_move(self.board,self.play_pruning)
 
                     self.drop_piece(self.board, best_move)
                     self.draw_board()
                     if self.check_winner(self.board):
                         label = self.myfont.render(f"Baboso, ¡la IA te ganó!", 1, WHITE)
+                        self.screen.blit(label, (5, 5))
+                        pygame.display.update()
+                        pygame.time.delay(2000)
+                        self.running = False
+                    else:
+                        self.switch_player()
+
+        pygame.quit()
+
+
+
+
+
+
+
+class ConnectFourGameAI_vsAI(ConnectFourGame):
+    def __init__(self):
+        super().__init__()
+        self.agent = MinimaxAgent(depth=5)
+        self.agent2 = MinimaxAgent(depth=5)
+        
+
+    def run(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif self.current_player == 1:
+                    # La IA1 juega (jugador 1) este usa pruning
+
+                    pygame.time.delay(500)
+                    best_move = self.agent.get_best_move(self.board,True)
+                    
+                    self.drop_piece(self.board, best_move)
+                    self.draw_board()
+                    if self.check_winner(self.board):
+                        label = self.myfont.render(f"Ia con pruning", 1, WHITE)
+                        self.screen.blit(label, (5, 5))
+                        pygame.display.update()
+                        pygame.time.delay(2000)
+                        self.running = False
+                    else:
+                        self.switch_player()
+
+                elif self.current_player == 2:
+                    # La IA juega (jugador 2)
+                    pygame.time.delay(500)  
+
+                    # Utilizamos el agente para que realice su jugada
+                    best_move = self.agent.get_best_move(self.board,False)
+
+                    self.drop_piece(self.board, best_move)
+                    self.draw_board()
+                    if self.check_winner(self.board):
+                        label = self.myfont.render(f"IA sin Pruning", 1, WHITE)
                         self.screen.blit(label, (5, 5))
                         pygame.display.update()
                         pygame.time.delay(2000)

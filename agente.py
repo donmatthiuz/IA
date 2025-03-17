@@ -42,6 +42,50 @@ class MinimaxAgent:
                     column = col
             return column, value
     
+    def minimax_alpha_beta(self, board, depth, alpha, beta, maximizing_player):
+        valid_locations = self.get_valid_moves(board)
+        is_terminal = self.is_terminal_node(board)
+        
+        if depth == 0 or is_terminal:
+            if is_terminal:
+                if self.check_winner(board) == 1:
+                    return (None, 1000000)
+                elif self.check_winner(board) == 2:
+                    return (None, -1000000)
+                else: 
+                    return (None, 0)
+            else:
+                return (None, self.evaluate_board(board))
+        
+        if maximizing_player:
+            value = -np.inf
+            column = np.random.choice(valid_locations)
+            for col in valid_locations:
+                temp_board = board.copy()
+                self.drop_piece(temp_board, col, 1)
+                new_score = self.minimax_alpha_beta(temp_board, depth - 1, alpha, beta, False)[1]
+                if new_score > value:
+                    value = new_score
+                    column = col
+                alpha = max(alpha, value)
+                if alpha >= beta:
+                    break
+            return column, value
+        else:
+            value = np.inf
+            column = np.random.choice(valid_locations)
+            for col in valid_locations:
+                temp_board = board.copy()
+                self.drop_piece(temp_board, col, 2)
+                new_score = self.minimax_alpha_beta(temp_board, depth - 1, alpha, beta, True)[1]
+                if new_score < value:
+                    value = new_score
+                    column = col
+                beta = min(beta, value)
+                if alpha >= beta:
+                    break
+            return column, value
+    
     def get_valid_moves(self, board):
         return [col for col in range(board.shape[1]) if board[0, col] == 0]
     
@@ -83,6 +127,9 @@ class MinimaxAgent:
     def evaluate_board(self, board):
         return np.random.randint(-10, 10)  # Función de evaluación simple (puedes mejorarla)
     
-    def get_best_move(self, board):
-        column, _ = self.minimax(board, self.depth, True)
+    def get_best_move(self, board, use_alpha_beta=False):
+        if use_alpha_beta:
+            column, _ = self.minimax_alpha_beta(board, self.depth, -np.inf, np.inf, True)
+        else:
+            column, _ = self.minimax(board, self.depth, True)
         return column
