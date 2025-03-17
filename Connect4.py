@@ -1,100 +1,115 @@
 import numpy as np
-import os
+import pygame
+import sys
 
-class ConnectFourBoard:
-    def __init__(self, rows=6, cols=7):
-        self.rows = rows
-        self.cols = cols
-        self.board = np.zeros((rows, cols), dtype=int)  # 0: vacío, 1: jugador 1, 2: jugador 2
+# Definir colores
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
 
-    def print_board(self):
-        """Muestra el tablero con formato más claro."""
-        print("\nTablero:")
-        for row in range(self.rows):
-            print("| " + " ".join(str(self.board[row, col]) for col in range(self.cols)) + " |")
-        print("  " + " ".join(str(i) for i in range(self.cols)))
+BLUE = (0, 0, 255)
+RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
 
-class ConnectFour(ConnectFourBoard):
-    def __init__(self, rows=6, cols=7):
-        super().__init__(rows, cols)
+# Configuración del juego
+ROWS = 6
+COLS = 7
+SQUARESIZE = 100
+RADIUS = SQUARESIZE // 2 - 5
+WIDTH = COLS * SQUARESIZE
+HEIGHT = (ROWS + 1) * SQUARESIZE
+SIZE = (WIDTH, HEIGHT)
+
+class ConnectFourGame:
+    def __init__(self):
+        self.board = np.zeros((ROWS, COLS), dtype=int)
         self.current_player = 1
+        pygame.init()
+        self.myfont = pygame.font.SysFont("monospace", 75)
+        self.screen = pygame.display.set_mode(SIZE)
+        pygame.display.set_caption("Connect Four")
+        self.draw_board()
+        self.running = True
+
+    def draw_board(self):
+        self.screen.fill(BLACK)
+        for c in range(COLS):
+            for r in range(ROWS):
+                pygame.draw.rect(self.screen, BLUE, (c * SQUARESIZE, (r + 1) * SQUARESIZE, SQUARESIZE, SQUARESIZE))
+                color = BLACK if self.board[r, c] == 0 else (RED if self.board[r, c] == 1 else YELLOW)
+                pygame.draw.circle(self.screen, color, (c * SQUARESIZE + SQUARESIZE // 2, (r + 1) * SQUARESIZE + SQUARESIZE // 2), RADIUS)
+        pygame.display.update()
 
     def is_valid_move(self, col):
-        """Verifica si una columna tiene espacio para un movimiento."""
         return self.board[0, col] == 0
 
     def drop_piece(self, col):
-        """Coloca una ficha en la columna especificada si es un movimiento válido."""
-        if not self.is_valid_move(col):
-            return False
-        for row in range(self.rows - 1, -1, -1):
+        for row in range(ROWS - 1, -1, -1):
             if self.board[row, col] == 0:
                 self.board[row, col] = self.current_player
-                self.switch_player()
                 return True
         return False
 
-    def switch_player(self):
-        """Cambia al siguiente jugador."""
-        self.current_player = 3 - self.current_player
-
     def check_winner(self):
-        """Verifica si hay un ganador en filas, columnas o diagonales."""
-        for r in range(self.rows):
-            for c in range(self.cols - 3):
-                if self.check_line(self.board[r, c:c+4]):
+        for r in range(ROWS):
+            for c in range(COLS - 3):
+                if self.check_line(self.board[r, c:c + 4]):
                     return self.board[r, c]
 
-        for r in range(self.rows - 3):
-            for c in range(self.cols):
-                if self.check_line(self.board[r:r+4, c]):
+        for r in range(ROWS - 3):
+            for c in range(COLS):
+                if self.check_line(self.board[r:r + 4, c]):
                     return self.board[r, c]
 
-        for r in range(self.rows - 3):
-            for c in range(self.cols - 3):
-                if self.check_line([self.board[r+i, c+i] for i in range(4)]):
+        for r in range(ROWS - 3):
+            for c in range(COLS - 3):
+                if self.check_line([self.board[r + i, c + i] for i in range(4)]):
                     return self.board[r, c]
 
-        for r in range(3, self.rows):
-            for c in range(self.cols - 3):
-                if self.check_line([self.board[r-i, c+i] for i in range(4)]):
+        for r in range(3, ROWS):
+            for c in range(COLS - 3):
+                if self.check_line([self.board[r - i, c + i] for i in range(4)]):
                     return self.board[r, c]
 
         return 0
 
     def check_line(self, line):
-        """Verifica si una línea de 4 casillas contiene el mismo número (1 o 2)."""
         return all(x == line[0] and x != 0 for x in line)
 
+    def switch_player(self):
+        self.current_player = 3 - self.current_player
 
-def clear_screen():
-    os.system("cls" if os.name == "nt" else "clear")
+    def run(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.MOUSEMOTION:
+                    pygame.draw.rect(self.screen, BLACK, (0, 0, WIDTH, SQUARESIZE))
+                    x_pos = event.pos[0]
+                    pygame.draw.circle(self.screen, RED if self.current_player == 1 else YELLOW, (x_pos, SQUARESIZE // 2), RADIUS)
+                    pygame.display.update()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    col = event.pos[0] // SQUARESIZE
+                    if self.is_valid_move(col):
+                        self.drop_piece(col)
+                        self.draw_board()
+                        winner = self.check_winner()
+                        if winner:
+                            print(f"¡Jugador {winner} gana!")
+                            label = self.myfont.render(f"¡Jugador {winner} gana!", 1, WHITE)
+                            self.screen.blit(label, (40,10))
+                            pygame.display.update()
+				            
+                            pygame.time.delay(2000)
+                            self.running = False
+                        self.switch_player()
+        pygame.quit()
+        
 
-def play_game():
-    game = ConnectFour()
-    while True:
-        clear_screen()
-        game.print_board()
-        print(f"Jugador {game.current_player}, elige una columna (0-{game.cols - 1}):")
-        try:
-            col = int(input().strip())
-            if col < 0 or col >= game.cols or not game.is_valid_move(col):
-                raise ValueError("Movimiento no válido. Intenta de nuevo.")
-            game.drop_piece(col)
-            winner = game.check_winner()
-            if winner:
-                game.print_board()
-                print(f"¡Jugador {winner} gana!")
-                input("Presiona Enter para continuar...")
-                clear_screen()
-                break
-        except ValueError as e:
-            print(e)
-            input("Presiona Enter para continuar...")
 
 def main():
     while True:
-        clear_screen()
+        
         print("""
         ╔════════════════════════╗
         ║     Connect Four       ║
@@ -105,13 +120,15 @@ def main():
         """)
         choice = input("Selecciona una opción: ")
         if choice == "1":
-            play_game()
+            game = ConnectFourGame()
+            game.run()
         elif choice == "2":
             print("Saliendo del juego...")
             break
         else:
             print("Opción inválida. Intenta de nuevo.")
             input("Presiona Enter para continuar...")
+
 
 if __name__ == "__main__":
     main()
