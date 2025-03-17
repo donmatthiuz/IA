@@ -2,7 +2,7 @@ import math
 import numpy as np
 import pygame
 import sys
-from agente import Agent
+from agente import MinimaxAgent
 # Definir colores
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -185,7 +185,7 @@ class ConnectFourGameHuman(ConnectFourGame):
 class ConnectFourGameAI(ConnectFourGame):
     def __init__(self):
         super().__init__()
-        self.agent = Agent(player_number=2)  # El jugador 2 es la IA
+        self.agent = MinimaxAgent(depth=5)
 
     def run(self):
         while self.running:
@@ -217,7 +217,8 @@ class ConnectFourGameAI(ConnectFourGame):
                     pygame.time.delay(500)  # Retraso para simular el tiempo de la IA
 
                     # Utilizamos el agente para que realice su jugada
-                    best_move = self.agent.get_best_move(self, depth=5)  # Profundidad de 5 para el Minimax
+                    best_move = self.agent.get_best_move(self.board)
+
                     self.drop_piece(self.board, best_move)
                     self.draw_board()
                     if self.check_winner(self.board):
