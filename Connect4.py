@@ -2,7 +2,9 @@ import math
 import numpy as np
 import pygame
 import sys
-from R_estado import TDAgent
+from R_estado import MinimaxAgent, TDAgent
+
+
 # Definir colores
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -21,44 +23,30 @@ HEIGHT = (ROWS + 1) * SQUARESIZE
 SIZE = (WIDTH, HEIGHT)
 WINDOW_LENGTH = 4
 
-import numpy as np
-import pygame
-import random
+
+
+
+
+ROWS = 6
+COLS = 7
+WINDOW_LENGTH = 4
 
 class ConnectFourGame:
     def __init__(self):
         self.board = np.zeros((ROWS, COLS), dtype=int)
         self.current_player = 1
-        pygame.init()
-        self.myfont = pygame.font.SysFont("monospace", 75)
-        self.screen = pygame.display.set_mode(SIZE)
-        pygame.display.set_caption("Connect Four")
-        self.draw_board()
         self.running = True
-    
+
     def ver_posiciones_vacias(self, board):
-        valid_locations = []
-        for col in range(COLS):
-            if self.is_valid_move(board,col):
-                valid_locations.append(col)
-        return valid_locations
-    
-    def obtener_siguiente_row_abierta(self,board, col):
+        return [col for col in range(COLS) if self.is_valid_move(board, col)]
+
+    def obtener_siguiente_row_abierta(self, board, col):
         for r in range(ROWS):
             if board[r][col] == 0:
                 return r
-    
-    def es_nodo_terminal(self, board):
-        return self.check_winner(board) or len(self.ver_posiciones_vacias(board)) == 0
 
-    def draw_board(self):
-        self.screen.fill(BLACK)
-        for c in range(COLS):
-            for r in range(ROWS):
-                pygame.draw.rect(self.screen, BLUE, (c * SQUARESIZE, (r + 1) * SQUARESIZE, SQUARESIZE, SQUARESIZE))
-                color = BLACK if self.board[r, c] == 0 else (RED if self.board[r, c] == 1 else YELLOW)
-                pygame.draw.circle(self.screen, color, (c * SQUARESIZE + SQUARESIZE // 2, (r + 1) * SQUARESIZE + SQUARESIZE // 2), RADIUS)
-        pygame.display.update()
+    def es_nodo_terminal(self, board):
+        return self.check_winner(board) or not self.ver_posiciones_vacias(board)
 
     def is_valid_move(self, board, col):
         return board[0, col] == 0
@@ -69,7 +57,6 @@ class ConnectFourGame:
                 board[row, col] = self.current_player
                 return True
         return False
-    
 
     def evaluar_jugada(self, window, pieza_oponente):
         score = 0
@@ -84,39 +71,30 @@ class ConnectFourGame:
             score -= 4
 
         return score
-    
-    def punta_posicion(self, board, mio, oponenete):
+
+    def punta_posicion(self, board, mio, oponente):
         score = 0
 
-        ## Score center column
-        center_array = [int(i) for i in list(board[:, COLS//2])]
-        center_count = center_array.count(mio)
-        score += center_count * 3
+        center_array = [int(i) for i in list(board[:, COLS // 2])]
+        score += center_array.count(mio) * 3
 
-        ## Score Horizontal
         for r in range(ROWS):
-            row_array = [int(i) for i in list(board[r,:])]
-            for c in range(COLS-3):
-                window = row_array[c:c+WINDOW_LENGTH]
-                score += self.evaluar_jugada(window, oponenete)
+            row_array = [int(i) for i in list(board[r, :])]
+            for c in range(COLS - 3):
+                score += self.evaluar_jugada(row_array[c:c + WINDOW_LENGTH], oponente)
 
-       
         for c in range(COLS):
-            col_array = [int(i) for i in list(board[:,c])]
-            for r in range(ROWS-3):
-                window = col_array[r:r+WINDOW_LENGTH]
-                score += self.evaluar_jugada(window, oponenete)
+            col_array = [int(i) for i in list(board[:, c])]
+            for r in range(ROWS - 3):
+                score += self.evaluar_jugada(col_array[r:r + WINDOW_LENGTH], oponente)
 
-        
-        for r in range(ROWS-3):
-            for c in range(COLS-3):
-                window = [board[r+i][c+i] for i in range(WINDOW_LENGTH)]
-                score += self.evaluar_jugada(window, oponenete)
+        for r in range(ROWS - 3):
+            for c in range(COLS - 3):
+                score += self.evaluar_jugada([board[r + i][c + i] for i in range(WINDOW_LENGTH)], oponente)
 
-        for r in range(ROWS-3):
-            for c in range(COLS-3):
-                window = [board[r+3-i][c+i] for i in range(WINDOW_LENGTH)]
-                score += self.evaluar_jugada(window, oponenete)
+        for r in range(ROWS - 3):
+            for c in range(COLS - 3):
+                score += self.evaluar_jugada([board[r + 3 - i][c + i] for i in range(WINDOW_LENGTH)], oponente)
 
         return score
 
@@ -149,112 +127,245 @@ class ConnectFourGame:
     def switch_player(self):
         self.current_player = 3 - self.current_player
 
+    
+    def reset(self):
+        self.board = np.zeros((ROWS, COLS), dtype=int)
+
+
+
+class ConnectFourGameAI_train:
+    def __init__(self, play_pruning=False):
+        self.agent = TDAgent()
+        self.board = np.zeros((6, 7), dtype=int)
+        self.play_pruning = play_pruning
+
+    def run(self, episodes=1000):
+        for episode in range(episodes):
+            self.board = np.zeros((6, 7), dtype=int)  # Reiniciar el tablero en cada episodio
+            running = True
+            total_reward = 0
+
+            while running:
+                move = self.agent.choose_action(self.board)
+                prev_board = self.board.copy()
+                self.agent.drop_piece(self.board, move, 1)
+
+                if self.agent.check_winner(self.board) == 1:
+                    reward = 1
+                    running = False
+                elif len(self.agent.get_valid_moves(self.board)) == 0:
+                    reward = 0
+                    running = False
+                else:
+                    reward = -0.01  # Penalización
+
+                self.agent.update_q_value(prev_board, move, reward, self.board)
+                total_reward += reward
+
+                if not running:
+                    self.agent.save_q_table()
+                    break
+            if self.agent.epsilon > self.agent.min_epsilon:
+                self.agent.epsilon *= self.agent.epsilon_decay
+
+            print(f"Episode {episode + 1}/{episodes}, Reward: {total_reward}, Epsilon: {self.agent.epsilon}")
+
+
 class ConnectFourGameHuman(ConnectFourGame):
     def run(self):
         while self.running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+            print(f"Turno del jugador {self.current_player}")
+            print(self.board)
+            col = int(input("Elige una columna (0-6): "))
+            if 0 <= col < COLS and self.is_valid_move(self.board, col):
+                self.drop_piece(self.board, col)
+                winner = self.check_winner(self.board)
+                if winner:
+                    print(f"¡Jugador {winner} gana!")
                     self.running = False
-                elif event.type == pygame.MOUSEMOTION:
-                    pygame.draw.rect(self.screen, BLACK, (0, 0, WIDTH, SQUARESIZE))
-                    x_pos = event.pos[0]
-                    pygame.draw.circle(self.screen, RED if self.current_player == 1 else YELLOW, (x_pos, SQUARESIZE // 2), RADIUS)
-                    pygame.display.update()
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    col = event.pos[0] // SQUARESIZE
-                    if self.is_valid_move(self.board,col):
-                        self.drop_piece(self.board,col)
-                        self.draw_board()
-                        winner = self.check_winner(self.board)
-                        print(winner)
-                        if winner:
-                            print(f"¡Jugador {winner} gana!")
-                            label = self.myfont.render(f"¡Jugador {winner} gana!", 1, WHITE)
-                            self.screen.blit(label, (40,10))
-                            pygame.display.update()
-				            
-                            pygame.time.delay(2000)
-                            self.running = False
+                self.switch_player()
+            else:
+                print("Movimiento no válido. Inténtalo de nuevo.")
+
+
+class ConnectFourGameAI(ConnectFourGame):
+    def __init__(self, play_pruning=False):
+        super().__init__()
+        self.agent = MinimaxAgent(depth=5)
+        self.play_pruning = play_pruning
+
+    def run(self):
+        while self.running:
+            if self.current_player == 1:
+                print(self.board)
+                col = int(input("Jugador 1, elige una columna (0-6): "))
+                if 0 <= col < COLS and self.is_valid_move(self.board, col):
+                    self.drop_piece(self.board, col)
+                    if self.check_winner(self.board):
+                        print(self.board)
+                        print("¡Jugador 1 gana!")
+                        self.running = False
+                    else:
                         self.switch_player()
-        pygame.quit()
+                else:
+                    print("Movimiento no válido. Inténtalo de nuevo.")
+            elif self.current_player == 2:
+                print(self.board)
+                print("La IA está pensando...")
+                best_move = self.agent.get_best_move(self.board, self.play_pruning)
+                self.drop_piece(self.board, best_move)
+                print(f"La IA juega en la columna {best_move}")
+                if self.check_winner(self.board):
+                    print(self.board)
+                    print("¡La IA gana!")
+                    self.running = False
+                else:
+                    self.switch_player()
+
+
+class Entrenamiento():
+    def __init__(self, tablero):
+        self.agent = TDAgent()
+        self.board = tablero
+
+
+    def run(self):
+        alpha_range = [0.1, 0.05, 0.01]
+        gamma_range = [0.9, 0.8, 0.7]
+        epsilon_range = [0.9,  0.5, 0.1]
+        self.agent.fine_tune_parameters(alpha_range=alpha_range, 
+                                        gamma_range=gamma_range, 
+                                        epsilon_range=epsilon_range)
+
+
+
+class ConectFourGame_TDAg_IA(ConnectFourGame):
+    def __init__(self, competir_contra="MINIMAX", episodios=50):
+        # Llamamos al constructor de la clase base (ConnectFourGame)
+        self.victorias = 0
+        self.episodios = episodios
+        self.competidor = competir_contra
+        self.agente2 = None
+        super().__init__()
+        if competir_contra == "MINIMAX":
+            self.agente2 = MinimaxAgent(depth=5)
+        elif competir_contra == "MINIMAX_ALPHA":
+            self.agente2 = MinimaxAgent(depth=5)
+        
+        elif competir_contra == "TD":
+            self.agente2 = TDAgent()
+            self.agente2.train()
+
+        self.agente1 =  TDAgent(alpha=0.01, gamma=0.7, epsilon=0.1)   
+        self.agente1.train()
+
+    def run(self):
+        while self.running:
+          if self.current_player == 1:
+            move = self.agente1.choose_action(self.board)
+            prev_board =self.board.copy()
+            self.agente1.drop_piece(self.board, move, 1)
+
+            
+            print(f"TD juega en la columna {move}")
+
+            
+            if self.agente1.check_winner(self.board) == 1:
+              self.victorias += 1
+              reward = 1
+              self.agente1.update_q_value(prev_board, move, reward, self.board)
+              print("gana TD")
+              self.running = False
+            else:
+              reward = 0
+              self.agente1.update_q_value(prev_board, move, reward, self.board)
+              self.switch_player()
+
+          elif self.current_player == 2:
+
+
+            #print(self.board)
+
+            if self.competidor == "MINIMAX" or self.competidor == "MINIMAX_ALPHA":
+                alfa_beta_activate = False
+                if self.competidor == "MINIMAX":
+                    alfa_beta_activate = False
+                elif self.competidor == "MINIMAX_ALPHA":
+                    alfa_beta_activate =True
+                best_move = self.agente2.get_best_move(self.board,alfa_beta_activate)
+                print(f"MINIMAX 2 juega en la columna {best_move}")
+                self.drop_piece(self.board, best_move)
+                if self.check_winner(self.board):
+                  reward = -0.01
+                  self.agente1.update_q_value(prev_board, move, reward, self.board)
+                  print("MINIMAX GANA")
+                  self.running = False
+                else:
+                    self.switch_player()
+            
+            else:
+                move = self.agente2.choose_action(self.board)
+                prev_board =self.board.copy()
+                self.agente2.drop_piece(self.board, move, 2)
+                print(f"TD competidor juega en la columna {move}")
+
+
+                if self.agente2.check_winner(self.board) == 2:
+                    reward = -0.01
+                    self.agente1.update_q_value(prev_board, move, reward, self.board)
+                    print("gana TD competidor")
+                    self.running = False
+                else:
+                    reward = 0
+                    self.agente1.update_q_value(prev_board, move, reward, self.board)
+                    self.switch_player()
+    
+    def analize(self):
+        for ep in range(self.episodios):
+            self.run()
+            print(f"Episodio: {ep}")
+        
+        print(f"Victorias: {self.victorias}")
+
+                
+                
+
 
 
         
 
 
-class ConnectFourGameAI:
-    def __init__(self, play_pruning=False):
-        self.agent = TDAgent()
-        self.board = np.zeros((6, 7), dtype=int)
-        self.play_pruning = play_pruning  
 
-    def run(self):
-        running = True
-        while running:
-            move = self.agent.choose_action(self.board)
-            prev_board = self.board.copy()
-            self.agent.drop_piece(self.board, move, 1)
-            
-            if self.agent.check_winner(self.board) == 1:
-                reward = 1
-                running = False
-            elif len(self.agent.get_valid_moves(self.board)) == 0:
-                reward = 0
-                running = False
-            else:
-                reward = -0.01  # Penalización
 
-            self.agent.update_q_value(prev_board, move, reward, self.board)
-
-            if not running:
-                self.agent.save_q_table()
-                break
 
 class ConnectFourGameAI_vsAI(ConnectFourGame):
     def __init__(self):
         super().__init__()
-        self.agent1 = TDAgent()  # First AI using TD-learning
-        self.agent2 = MinimaxAgent(depth=5)  # Second AI using Minimax
+        self.agent = MinimaxAgent(depth=5)
+        self.agent2 = MinimaxAgent(depth=5)
+
 
     def run(self):
         while self.running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-
-            pygame.time.delay(500)  # Delay for better visualization
-
-            if self.current_player == 1:
-                # AI1 (TD-Learning) chooses a move
-                state = self.agent1.state_representation(self.board)
-                best_move = self.agent1.choose_action(state, self.get_valid_moves())
-                
-                self.drop_piece(self.board, best_move)
-                self.draw_board()
-
-                if self.check_winner(self.board):
-                    label = self.myfont.render(f"TD Learning AI Wins!", 1, WHITE)
-                    self.screen.blit(label, (5, 5))
-                    pygame.display.update()
-                    pygame.time.delay(2000)
-                    self.running = False
-                else:
-                    self.switch_player()
-
-            elif self.current_player == 2:
-                # AI2 (Minimax) chooses a move
-                best_move = self.agent2.get_best_move(self.board, False)
-
-                self.drop_piece(self.board, best_move)
-                self.draw_board()
-
-                if self.check_winner(self.board):
-                    label = self.myfont.render(f"Minimax AI Wins!", 1, WHITE)
-                    self.screen.blit(label, (5, 5))
-                    pygame.display.update()
-                    pygame.time.delay(2000)
-                    self.running = False
-                else:
-                    self.switch_player()
-
-        pygame.quit()
+          if self.current_player == 1:
+            print(self.board)
+            best_move = self.agent.get_best_move(self.board,True)
+            print(f"La IA 1 juega en la columna {best_move}")
+            self.drop_piece(self.board, best_move)
+            if self.check_winner(self.board):
+              print(self.board)
+              print("Ia con pruning gana")
+              self.running = False
+            else:
+              self.switch_player()
+          elif self.current_player == 2:
+            print(self.board)
+            best_move = self.agent.get_best_move(self.board,False)
+            print(f"La IA 2 juega en la columna {best_move}")
+            self.drop_piece(self.board, best_move)
+            if self.check_winner(self.board):
+              print(self.board)
+              print("Ia sin pruning gana")
+              self.running = False
+            else:
+              self.switch_player()
