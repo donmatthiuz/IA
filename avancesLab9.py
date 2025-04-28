@@ -49,11 +49,45 @@ class HMM:
 
     def backward(self, observations):
         # Aquí ira la implementación del algoritmo backward
-        pass
+        beta = []
+
+        # Paso de inicialización
+        final_beta = {}
+        for state in self.states:
+            final_beta[state] = 1  # Inicialmente, todos los betas al último tiempo son 1
+        beta.insert(0, final_beta)
+
+        # Paso de inducción (hacia atrás)
+        for t in reversed(range(len(observations) - 1)):
+            current_beta = {}
+            for current_state in self.states:
+                prob_sum = 0
+                for next_state in self.states:
+                    prob_sum += (self.transition_prob[current_state][next_state] *
+                                self.emission_prob[next_state][observations[t+1]] *
+                                beta[0][next_state])
+                current_beta[current_state] = prob_sum
+            beta.insert(0, current_beta)
+
+        return beta
 
     def compute_state_probabilities(self, observations):
         # Aquí se combinarán forward y backward
-        pass
+        alpha = self.forward(observations)
+        beta = self.backward(observations)
+
+        # Calculamos las probabilidades estado a estado
+        state_probabilities = []
+
+        for t in range(len(observations)):
+            current_probs = {}
+            normalization_factor = sum(alpha[t][s] * beta[t][s] for s in self.states)
+            for state in self.states:
+                # Fórmula: (alpha * beta) / normalización
+                current_probs[state] = (alpha[t][state] * beta[t][state]) / normalization_factor
+            state_probabilities.append(current_probs)
+
+        return state_probabilities
 
 
 # Parámetros del modelo
@@ -74,3 +108,17 @@ emission_prob = {
 
 # Instanciar el modelo
 hmm = HMM(states, observations, initial_prob, transition_prob, emission_prob)
+
+
+# Secuencia de observaciones para probar
+test_observations = ['Sunny', 'Sunny', 'Rainy']
+
+# Calcular las probabilidades de estar en cada estado en cada tiempo
+state_probs = hmm.compute_state_probabilities(test_observations)
+
+# Imprimir los resultados
+for t, probs in enumerate(state_probs):
+    print(f"Tiempo {t} (Observación: {test_observations[t]}):")
+    for state, prob in probs.items():
+        print(f"  Estado '{state}': {prob:.4f}")
+
