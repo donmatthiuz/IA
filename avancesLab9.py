@@ -110,15 +110,22 @@ emission_prob = {
 hmm = HMM(states, observations, initial_prob, transition_prob, emission_prob)
 
 
-# Secuencia de observaciones para probar
-test_observations = ['Sunny', 'Sunny', 'Rainy']
 
-# Calcular las probabilidades de estar en cada estado en cada tiempo
-state_probs = hmm.compute_state_probabilities(test_observations)
+# Generar una secuencia de observaciones.
+obs_sequence = hmm.generate_sequence(5)
+print("Secuencia Generada:", obs_sequence)
 
-# Imprimir los resultados
-for t, probs in enumerate(state_probs):
-    print(f"Tiempo {t} (Observación: {test_observations[t]}):")
-    for state, prob in probs.items():
-        print(f"  Estado '{state}': {prob:.4f}")
+# Calculo de probabilidades forward
+forward_probs = hmm.forward(observations)
+print("\nProbabilidades Forward:")
+print(forward_probs)
 
+# Calculo de probabilidades backward
+backward_probs = hmm.backward(observations)
+print("\nProbabilidades Backward:")
+print(backward_probs)
+
+# Calcular probabilidades de estado
+state_probs = hmm.compute_state_probabilities(observations)
+print("\nProbabilidades de Estados:")
+print(state_probs)
