@@ -14,7 +14,7 @@ def clasificar_franja_horaria(hora):
     if 0 <= h < 6:
         return 'Madrugada'
     elif 6 <= h < 12:
-        return 'Mañana'
+        return 'Morning'
     elif 12 <= h < 18:
         return 'Tarde'
     else:
@@ -41,7 +41,7 @@ for dia in data['days']:
         franja = clasificar_franja_horaria(hora_num)
 
         registros.append({
-            'año': int(año),
+            'year': int(año),
             'mes': int(mes),
             'dia': int(dia_),
             'franja_horaria': franja,
