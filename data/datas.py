@@ -4,8 +4,6 @@ from sklearn.model_selection import train_test_split
 # Cargar dataset balanceado
 df_balanceado = pd.read_csv("balanceado.csv")
 
-# Codificar la columna categórica 'franja_horaria' con One-Hot Encoding
-df_balanceado = pd.get_dummies(df_balanceado, columns=['franja_horaria'], drop_first=True)
 
 # Dividir en 80% train y 20% temp (validación + prueba), con estratificación por target
 df_train, df_temp = train_test_split(df_balanceado, test_size=0.2, random_state=42, stratify=df_balanceado['target'])

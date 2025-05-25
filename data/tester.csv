@@ -1,0 +1,2 @@
+target,year,mes,dia,franja_horaria,temperatura,humedad,viento_vel_m_s,viento_dir,presion,precipitacion,nubosidad
+1,2025,4,21,Madrugada,19.0,88.19,2.11,180.0,1021.0,0.1,100.0
