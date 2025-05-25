@@ -1,9 +1,9 @@
-from continuos import *
+from BayesianNetwork import *
 import pandas as pd
 
 import io
 
-df = pd.read_csv("../data/balanceado_test.csv")
+df = pd.read_csv("../data/balanceado_train.csv")
 
 TP = 0  # Verdaderos positivos
 TN = 0  # Verdaderos negativos
@@ -65,6 +65,7 @@ if __name__ == "__main__":
 
   bn = BayesianNetwork()
   bn.add_node('Llueve', ['Si', 'No'])
+  
   bn.add_continuous_node('Temperatura', parents=['Llueve'])
   bn.add_continuous_node('Humedad', parents=['Llueve'])
   bn.add_continuous_node('Velocidad_Viento', parents=['Llueve'])

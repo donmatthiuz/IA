@@ -1,3 +1,6 @@
+import math
+import random
+
 class BayesianNetwork:
     def __init__(self):
         self.nodes = {}
@@ -9,9 +12,31 @@ class BayesianNetwork:
             'states': states,
             'parents': [],
             'children': [],
-            'cpt': {}
+            'cpt': {},
+            'type': 'discrete'
         }
         self.edges[name] = []
+    
+    def add_continuous_node(self, name, parents=None):
+        """Agregar un nodo continuo que sigue una distribución gaussiana"""
+        if parents is None:
+            parents = []
+        
+        self.nodes[name] = {
+            'states': 'continuous',
+            'parents': parents,
+            'children': [],
+            'cpt': {},
+            'type': 'continuous',
+            'gaussian_params': {}  # Almacenará mu y sigma para cada combinación de padres
+        }
+        self.edges[name] = []
+        
+        # Actualizar las relaciones padre-hijo
+        for parent in parents:
+            if parent in self.nodes:
+                self.nodes[parent]['children'].append(name)
+                self.edges[parent].append(name)
     
     def add_edge(self, parent, child):
         """Agregar una arista dirigida de parent a child"""
@@ -23,7 +48,6 @@ class BayesianNetwork:
         self.edges[parent].append(child)
     
     def set_cpt(self, node, cpt):
-       
         if node not in self.nodes:
             raise ValueError(f"El nodo {node} no existe")
         
@@ -33,24 +57,64 @@ class BayesianNetwork:
         
         self.nodes[node]['cpt'] = cpt
     
-    def get_probability(self, node, value, evidence=None):
+    def set_gaussian_params(self, node, params):
+        if node not in self.nodes:
+            raise ValueError(f"El nodo {node} no existe")
         
+        if self.nodes[node]['type'] != 'continuous':
+            raise ValueError(f"El nodo {node} no es continuo")
+        
+        for condition, param in params.items():
+            if param['sigma'] == 0:
+                print(f"Advertencia: sigma cero detectado para condición {condition} en nodo {node}, asignando valor pequeño")
+                param['sigma'] = 1e-6  # corregir sigma cero
+        
+        self.nodes[node]['gaussian_params'] = params
+
+    
+    def gaussian_pdf(self, x, mu, sigma):
+        if sigma <= 0:
+            raise ValueError(f"Sigma debe ser mayor que 0, recibido sigma={sigma}")
+        return (1 / (sigma * math.sqrt(2 * math.pi))) * math.exp(-0.5 * ((x - mu) / sigma) ** 2)
+    
+    def get_probability(self, node, value, evidence=None):
         if evidence is None:
             evidence = {}
         
-        cpt = self.nodes[node]['cpt']
-        parents = self.nodes[node]['parents']
+        node_info = self.nodes[node]
+        
+        if node_info['type'] == 'continuous':
+            return self.get_continuous_probability(node, value, evidence)
+        
+        cpt = node_info['cpt']
+        parents = node_info['parents']
         
         if not parents:
-      
             return cpt.get((), {}).get(value, 0)
         else:
-          
             condition = tuple(evidence.get(parent, None) for parent in parents)
             return cpt.get(condition, {}).get(value, 0)
     
-    def enumerate_all(self, vars_list, evidence):
+    def get_continuous_probability(self, node, value, evidence=None):
+        """Obtener la densidad de probabilidad para un nodo continuo"""
+        if evidence is None:
+            evidence = {}
         
+        node_info = self.nodes[node]
+        parents = node_info['parents']
+        gaussian_params = node_info['gaussian_params']
+        
+        if not parents:
+            # Nodo raíz continuo
+            params = gaussian_params.get((), {'mu': 0, 'sigma': 1})
+        else:
+            # Construir la condición basada en los padres
+            condition = tuple(evidence.get(parent, None) for parent in parents)
+            params = gaussian_params.get(condition, {'mu': 0, 'sigma': 1})
+        
+        return self.gaussian_pdf(value, params['mu'], params['sigma'])
+    
+    def enumerate_all(self, vars_list, evidence):
         if not vars_list:
             return 1.0
         
@@ -58,32 +122,59 @@ class BayesianNetwork:
         rest_vars = vars_list[1:]
         
         if first_var in evidence:
-         
             prob = self.get_probability(first_var, evidence[first_var], evidence)
             return prob * self.enumerate_all(rest_vars, evidence)
         else:
-          
-            total = 0.0
-            for value in self.nodes[first_var]['states']:
-                new_evidence = evidence.copy()
-                new_evidence[first_var] = value
-                prob = self.get_probability(first_var, value, new_evidence)
-                total += prob * self.enumerate_all(rest_vars, new_evidence)
-            return total
+            if self.nodes[first_var]['type'] == 'continuous':
+                # Para nodos continuos, necesitamos una aproximación
+                # Usaremos sampling o integración numérica
+                return self.approximate_continuous_enumeration(first_var, rest_vars, evidence)
+            else:
+                total = 0.0
+                for value in self.nodes[first_var]['states']:
+                    new_evidence = evidence.copy()
+                    new_evidence[first_var] = value
+                    prob = self.get_probability(first_var, value, new_evidence)
+                    total += prob * self.enumerate_all(rest_vars, new_evidence)
+                return total
+    
+    def approximate_continuous_enumeration(self, continuous_var, rest_vars, evidence):
+        """Aproximar la enumeración para variables continuas usando sampling"""
+        total = 0.0
+        num_samples = 100  # Número de muestras para la aproximación
+        
+        # Obtener parámetros gaussianos para el nodo continuo
+        node_info = self.nodes[continuous_var]
+        parents = node_info['parents']
+        gaussian_params = node_info['gaussian_params']
+        
+        if not parents:
+            params = gaussian_params.get((), {'mu': 0, 'sigma': 1})
+        else:
+            condition = tuple(evidence.get(parent, None) for parent in parents)
+            params = gaussian_params.get(condition, {'mu': 0, 'sigma': 1})
+        
+        # Generar muestras de la distribución gaussiana
+        for _ in range(num_samples):
+            sample_value = random.gauss(params['mu'], params['sigma'])
+            new_evidence = evidence.copy()
+            new_evidence[continuous_var] = sample_value
+            
+            prob = self.get_probability(continuous_var, sample_value, new_evidence)
+            total += prob * self.enumerate_all(rest_vars, new_evidence)
+        
+        return total / num_samples
     
     def query(self, query_var, query_value, evidence=None):
         if evidence is None:
             evidence = {}
         
-        
         all_vars = list(self.nodes.keys())
         
-       
         extended_evidence = evidence.copy()
         extended_evidence[query_var] = query_value
         numerator = self.enumerate_all(all_vars, extended_evidence)
         
-        # Calcular P(evidence)
         denominator = self.enumerate_all(all_vars, evidence)
         
         if denominator == 0:
@@ -91,14 +182,28 @@ class BayesianNetwork:
         
         return numerator / denominator
     
-    def marginal_probability(self, var, value):
+    def query_continuous_threshold(self, query_var, query_value, evidence=None, threshold_var=None, threshold_value=None):
+        """Query especial para variables continuas con umbral"""
+        if evidence is None:
+            evidence = {}
         
+        if threshold_var and threshold_value is not None:
+            evidence = evidence.copy()
+            evidence[threshold_var] = threshold_value
+        
+        # Para nodos discretos, usar query normal
+        if self.nodes[query_var]['type'] == 'discrete':
+            return self.query(query_var, query_value, evidence)
+        
+        # Para nodos continuos, calcular probabilidad directamente
+        return self.get_continuous_probability(query_var, query_value, evidence)
+    
+    def marginal_probability(self, var, value):
         all_vars = list(self.nodes.keys())
         evidence = {var: value}
         return self.enumerate_all(all_vars, evidence)
     
     def joint_probability(self, assignment):
-        
         prob = 1.0
         for node in self.nodes:
             if node in assignment:
@@ -111,137 +216,12 @@ class BayesianNetwork:
         print(f"Nodos: {len(self.nodes)}")
         for node, info in self.nodes.items():
             print(f"\n{node}:")
+            print(f"  Tipo: {info['type']}")
             print(f"  Estados: {info['states']}")
             print(f"  Padres: {info['parents']}")
             print(f"  Hijos: {info['children']}")
-            print(f"  CPT: {info['cpt']}")
+            if info['type'] == 'discrete':
+                print(f"  CPT: {info['cpt']}")
+            else:
+                print(f"  Parámetros Gaussianos: {info['gaussian_params']}")
 
-
-# Ejemplo de uso: Red para diagnóstico médico
-def ejemplo_diagnostico_medico():
-    """Ejemplo: Red bayesiana para diagnóstico médico"""
-    
-    # Crear la red
-    bn = BayesianNetwork()
-    
-    # Agregar nodos
-    bn.add_node('Gripe', ['Si', 'No'])
-    bn.add_node('Fiebre', ['Si', 'No'])
-    bn.add_node('Dolor_Cabeza', ['Si', 'No'])
-    bn.add_node('Congestion', ['Si', 'No'])
-    
-    # Agregar dependencias
-    bn.add_edge('Gripe', 'Fiebre')
-    bn.add_edge('Gripe', 'Dolor_Cabeza')
-    bn.add_edge('Gripe', 'Congestion')
-    
-    # Establecer probabilidades
-    # P(Gripe) - probabilidad a priori
-    bn.set_cpt('Gripe', {
-        (): {'Si': 0.1, 'No': 0.9}
-    })
-    
-    # P(Fiebre | Gripe)
-    bn.set_cpt('Fiebre', {
-        ('Si',): {'Si': 0.8, 'No': 0.2},  # Si tiene gripe
-        ('No',): {'Si': 0.05, 'No': 0.95}  # Si no tiene gripe
-    })
-    
-    # P(Dolor_Cabeza | Gripe)
-    bn.set_cpt('Dolor_Cabeza', {
-        ('Si',): {'Si': 0.7, 'No': 0.3},  # Si tiene gripe
-        ('No',): {'Si': 0.1, 'No': 0.9}   # Si no tiene gripe
-    })
-    
-    # P(Congestion | Gripe)
-    bn.set_cpt('Congestion', {
-        ('Si',): {'Si': 0.9, 'No': 0.1},  # Si tiene gripe
-        ('No',): {'Si': 0.02, 'No': 0.98} # Si no tiene gripe
-    })
-    
-    return bn
-
-
-def ejemplo_clima():
-    """Ejemplo: Red bayesiana para predicción del clima"""
-    
-    bn = BayesianNetwork()
-    
-    # Nodos
-    bn.add_node('Nublado', ['Si', 'No'])
-    bn.add_node('Lluvia', ['Si', 'No'])
-    bn.add_node('Aspersores', ['Si', 'No'])
-    bn.add_node('Cesped_Mojado', ['Si', 'No'])
-    
-    # Dependencias
-    bn.add_edge('Nublado', 'Lluvia')
-    bn.add_edge('Lluvia', 'Cesped_Mojado')
-    bn.add_edge('Aspersores', 'Cesped_Mojado')
-    
-    # Probabilidades
-    bn.set_cpt('Nublado', {
-        (): {'Si': 0.5, 'No': 0.5}
-    })
-    
-    bn.set_cpt('Aspersores', {
-        (): {'Si': 0.1, 'No': 0.9}
-    })
-    
-    bn.set_cpt('Lluvia', {
-        ('Si',): {'Si': 0.8, 'No': 0.2},  # Si está nublado
-        ('No',): {'Si': 0.2, 'No': 0.8}   # Si no está nublado
-    })
-    
-    bn.set_cpt('Cesped_Mojado', {
-        ('Si', 'Si'): {'Si': 0.99, 'No': 0.01},  # Lluvia=Si, Aspersores=Si
-        ('Si', 'No'): {'Si': 0.9, 'No': 0.1},    # Lluvia=Si, Aspersores=No
-        ('No', 'Si'): {'Si': 0.9, 'No': 0.1},    # Lluvia=No, Aspersores=Si
-        ('No', 'No'): {'Si': 0.01, 'No': 0.99}   # Lluvia=No, Aspersores=No
-    })
-    
-    return bn
-
-def crear_dataset_sintetico():
-    # Generar combinaciones simples de síntomas y su clase real
-    dataset = [
-        ({'Fiebre': 'Si', 'Dolor_Cabeza': 'Si', 'Congestion': 'Si'}, 'Si'),
-        ({'Fiebre': 'Si', 'Dolor_Cabeza': 'No', 'Congestion': 'Si'}, 'Si'),
-        ({'Fiebre': 'No', 'Dolor_Cabeza': 'Si', 'Congestion': 'Si'}, 'Si'),
-        ({'Fiebre': 'No', 'Dolor_Cabeza': 'No', 'Congestion': 'Si'}, 'No'),
-        ({'Fiebre': 'Si', 'Dolor_Cabeza': 'Si', 'Congestion': 'No'}, 'Si'),
-        ({'Fiebre': 'No', 'Dolor_Cabeza': 'Si', 'Congestion': 'No'}, 'No'),
-        ({'Fiebre': 'No', 'Dolor_Cabeza': 'No', 'Congestion': 'No'}, 'No'),
-        ({'Fiebre': 'Si', 'Dolor_Cabeza': 'No', 'Congestion': 'No'}, 'Si'),
-        ({'Fiebre': 'No', 'Dolor_Cabeza': 'Si', 'Congestion': 'No'}, 'No'),
-        ({'Fiebre': 'Si', 'Dolor_Cabeza': 'Si', 'Congestion': 'Si'}, 'Si'),
-    ]
-    return dataset
-
-def predecir_con_umbral(red, evidencia, var_objetivo, umbral=0.6):
-    # Obtener probabilidad de "Si"
-    p_si = red.query(var_objetivo, 'Si', evidencia)
-    if p_si > umbral:
-        return 'Si', p_si
-    else:
-        return 'No', p_si
-
-def evaluar_accuracy(red, dataset, var_objetivo, umbral=0.6):
-    total = len(dataset)
-    correctos = 0
-    for evidencia, clase_real in dataset:
-        prediccion, prob = predecir_con_umbral(red, evidencia, var_objetivo, umbral)
-        if prediccion == clase_real:
-            correctos += 1
-    return correctos / total if total > 0 else 0
-
-
-if __name__ == "__main__":
-    red_medica = ejemplo_diagnostico_medico()
-    dataset = crear_dataset_sintetico()
-
-    print("Evaluando con diferentes umbrales de probabilidad para 'Si'...")
-
-    for umbral in [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
-        acc = evaluar_accuracy(red_medica, dataset, 'Gripe', umbral)
-        print(f"Umbral={umbral:.1f} => Accuracy={acc:.4f}")
-    
