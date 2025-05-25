@@ -3,11 +3,15 @@ import pandas as pd
 
 import io
 
-df = pd.read_csv("../data/tester.csv")
+df = pd.read_csv("../data/balanceado_test.csv")
 
+TP = 0  # Verdaderos positivos
+TN = 0  # Verdaderos negativos
+FP = 0  # Falsos positivos
+FN = 0  # Falsos negativos
 
 def apriori_Data ():
-  df_apriori = pd.read_csv("../data/abril-mayo.csv")
+  df_apriori = pd.read_csv("../data/balanceado_train.csv")
   distribucion = df_apriori['target'].value_counts()
   total = distribucion[0] + distribucion[1]
   p_llueve = distribucion[1] / total
@@ -66,7 +70,7 @@ if __name__ == "__main__":
   bn.add_continuous_node('Velocidad_Viento', parents=['Llueve'])
   bn.add_continuous_node('Viento_Direccion', parents=['Llueve'])
   bn.add_continuous_node('Presion', parents=['Llueve'])
-  bn.add_continuous_node('Precipitacion', parents=['Llueve'])
+  # bn.add_continuous_node('Precipitacion', parents=['Llueve'])
   bn.add_continuous_node('Nubosidad', parents=['Llueve'])
 
   bn.set_cpt('Llueve', {
@@ -111,12 +115,12 @@ if __name__ == "__main__":
                     'sigma': stats['presion']['sigma'][0]}
     })
   
-  bn.set_gaussian_params('Precipitacion', {
-        ('Si',): {'mu':  stats['precipitacion']['mu'][1] , 
-                    'sigma': stats['precipitacion']['sigma'][1]}, 
-        ('No',): {'mu':  stats['precipitacion']['mu'][0] , 
-                    'sigma': stats['precipitacion']['sigma'][0]}
-    })
+  # bn.set_gaussian_params('Precipitacion', {
+  #       ('Si',): {'mu':  stats['precipitacion']['mu'][1] , 
+  #                   'sigma': stats['precipitacion']['sigma'][1]}, 
+  #       ('No',): {'mu':  stats['precipitacion']['mu'][0] , 
+  #                   'sigma': stats['precipitacion']['sigma'][0]}
+  #   })
   
   bn.set_gaussian_params('Nubosidad', {
         ('Si',): {'mu':  stats['nubosidad']['mu'][1] , 
@@ -147,10 +151,29 @@ if __name__ == "__main__":
         'Velocidad_Viento': row['viento_vel_m_s'],
         'Viento_Direccion': row['viento_dir'],
         'Presion': row['presion'],
-        'Precipitacion': row['precipitacion'],
+        # 'Precipitacion': row['precipitacion'],
         'Nubosidad': row['nubosidad']
     }
     p = bn.query('Llueve', 'Si', evidencia)
-    print(f"Fila {idx}  evidencia usada: {evidencia}")
-    print(f"Probabilidad de que llueva: {p} llovio : {row['target']}\n")
-  
+    prediccion = 1 if p > 0.55 else 0
+    real = row['target']
+
+    if prediccion == 1 and real == 1:
+        TP += 1
+    elif prediccion == 0 and real == 0:
+        TN += 1
+    elif prediccion == 1 and real == 0:
+        FP += 1
+    elif prediccion == 0 and real == 1:
+        FN += 1
+
+
+accuracy = (TP + TN) / (TP + TN + FP + FN)
+precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1-score: {f1:.2f}")
