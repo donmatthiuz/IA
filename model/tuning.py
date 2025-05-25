@@ -13,7 +13,7 @@ def apriori_Data():
     return p_llueve, p_no_llueve
 
 def get_distribucion_vars():
-    df_variables = pd.read_csv("../data/balanceado_train.csv")
+    df_variables = pd.read_csv("../data/abril-mayo.csv")
     grupos = df_variables.groupby('target')
     stats_continuas = {} 
 
