@@ -13,7 +13,7 @@ def apriori_Data():
     return p_llueve, p_no_llueve
 
 def get_distribucion_vars():
-    df_variables = pd.read_csv("../data/abril-mayo.csv")
+    df_variables = pd.read_csv("../data/balanceado_train.csv")
     grupos = df_variables.groupby('target')
     stats_continuas = {} 
 
@@ -233,7 +233,7 @@ def generate_configurations():
 
 def main():
     # Cargar datos
-    df = pd.read_csv("../data/balanceado_train.csv")
+    df = pd.read_csv("../data/balanceado_test.csv")
     
     print("Evaluando diferentes configuraciones de red bayesiana...")
     print("=" * 60)

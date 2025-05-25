@@ -3,7 +3,7 @@ import pandas as pd
 
 import io
 
-df = pd.read_csv("../data/balanceado_train.csv")
+df = pd.read_csv("../data/marzo-abril.csv")
 
 TP = 0  # Verdaderos positivos
 TN = 0  # Verdaderos negativos
@@ -24,6 +24,7 @@ def get_distribucion_vars():
     df_variables = pd.read_csv("../data/balanceado_train.csv")
     grupos = df_variables.groupby('target')
     stats_continuas = {} 
+    stats_discretas = {}
 
     for col in df_variables.columns:
         if col == 'target':
@@ -43,19 +44,32 @@ def get_distribucion_vars():
                 'mu': medias.to_dict(),
                 'sigma': stds.to_dict()
             }
+
+            
         else:
             # Mostrar conteos de valores por grupo target
             print("Conteo de valores por clase target:")
             conteos = df_variables.groupby(['target', col]).size()
             print(conteos)
-    
-    return stats_continuas
+
+            conteo = df.groupby(['target', 'franja_horaria']).size()
+
+           
+            probabilidades = conteo / conteo.groupby(level=0).sum()
+            print(probabilidades)
+
+            stats_discretas[col] = probabilidades
+
+    print("Probabilidades: ",stats_discretas)
+    print("franja_horaria", 
+          stats_discretas['franja_horaria'][(0, 'Madrugada')])
+    return stats_continuas, stats_discretas
 
   
 
 
 if __name__ == "__main__":
-  stats =get_distribucion_vars()
+  stats, stats_discretas = get_distribucion_vars()
 
   
   p_llueve, p_no_llueve = apriori_Data()
@@ -65,7 +79,7 @@ if __name__ == "__main__":
 
   bn = BayesianNetwork()
   bn.add_node('Llueve', ['Si', 'No'])
-  
+  bn.add_node('Franja_Horaria', ['Madrugada', 'Tarde', 'Morning', 'Noche'])
   bn.add_continuous_node('Temperatura', parents=['Llueve'])
   bn.add_continuous_node('Humedad', parents=['Llueve'])
   bn.add_continuous_node('Velocidad_Viento', parents=['Llueve'])
@@ -74,9 +88,23 @@ if __name__ == "__main__":
   # bn.add_continuous_node('Precipitacion', parents=['Llueve'])
   bn.add_continuous_node('Nubosidad', parents=['Llueve'])
 
+  bn.add_edge('Llueve', 'Franja_Horaria')
+  
   bn.set_cpt('Llueve', {
          (): {'Si': p_llueve, 'No': p_no_llueve}
   })
+
+
+  bn.set_cpt('Franja_Horaria', {
+        ('Si',): {'Madrugada': stats_discretas['franja_horaria'][(1, 'Madrugada')], 
+                  'Morning': stats_discretas['franja_horaria'][(1, 'Morning')],
+                  'Tarde': stats_discretas['franja_horaria'][(1, 'Tarde')],
+                  'Noche': stats_discretas['franja_horaria'][(1, 'Noche')]},
+        ('No',): {'Madrugada': stats_discretas['franja_horaria'][(0, 'Madrugada')], 
+                  'Morning': stats_discretas['franja_horaria'][(0, 'Morning')],
+                  'Tarde': stats_discretas['franja_horaria'][(0, 'Tarde')],
+                  'Noche': stats_discretas['franja_horaria'][(0, 'Noche')]}
+    })
 
   
   bn.set_gaussian_params('Temperatura', {
@@ -139,7 +167,8 @@ if __name__ == "__main__":
     'Viento_Direccion': 20.0,
     'Presion': 1013,
     'Precipitacion': 0.0,
-    'Nubosidad': 30.0
+    'Nubosidad': 30.0, 
+    'Franja_Horaria': 'Noche'
   }
   p = bn.query('Llueve', 'Si', evidencia)
   print(p)
@@ -152,6 +181,7 @@ if __name__ == "__main__":
         'Velocidad_Viento': row['viento_vel_m_s'],
         'Viento_Direccion': row['viento_dir'],
         'Presion': row['presion'],
+        'Franja_Horaria': row['franja_horaria'],
         # 'Precipitacion': row['precipitacion'],
         'Nubosidad': row['nubosidad']
     }
@@ -178,3 +208,8 @@ print(f"Accuracy: {accuracy:.2f}")
 print(f"Precision: {precision:.2f}")
 print(f"Recall: {recall:.2f}")
 print(f"F1-score: {f1:.2f}")
+
+print("Matriz de Confusión:")
+print(f"               Predicción Positiva   Predicción Negativa")
+print(f"Real Positivo      {TP}                    {FN}")
+print(f"Real Negativo      {FP}                    {TN}")
