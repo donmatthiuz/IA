@@ -14,7 +14,7 @@ MODEL_PATH = 'modelo_lluvia.pkl'
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://riskrain.netlify.app/"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
