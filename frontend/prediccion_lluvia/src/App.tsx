@@ -29,7 +29,7 @@ function App() {
     setError(null)
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/predict", {
+      const response = await fetch("https://riskrain.onrender.com/predict", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
