@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone
 import requests
 import pickle
 from datetime import datetime
@@ -9,6 +11,14 @@ app = FastAPI()
 API_KEY = 'WKTEXQ592KRHZXEFQVXGHU9MU'
 LOCATION = 'Ciudad de Guatemala'
 MODEL_PATH = 'modelo_lluvia.pkl'
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://riskrain.netlify.app/"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # === Utility Functions ===
 def clasificar_franja_horaria(hora: int) -> str:
@@ -62,7 +72,7 @@ def predecir_lluvia(modelo, datos_clima: dict):
 # === API Route ===
 @app.get("/predict")
 def predict():
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
 
     url = (
